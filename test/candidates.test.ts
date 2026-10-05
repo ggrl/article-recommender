@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { createMemoryRepository } from "../src/data/memoryRepository.ts";
-import { buildFilter, feedPools, readNextPools, unionPools, userLanguages } from "../src/engine/candidates.ts";
+import { availableIn, buildFilter, feedPools, readNextPools, unionPools, userLanguages } from "../src/engine/candidates.ts";
 import { DAY_MS, NOW, hoursAgo, loadDefaultConfig, makeArticle, makeUser } from "./helpers.ts";
 
 const window = { fromDay: "2026-09-29", toDay: "2026-10-05" };
@@ -24,6 +24,18 @@ describe("buildFilter", () => {
 describe("userLanguages", () => {
   it("is the main language followed by fallbacks", () => {
     expect(userLanguages(makeUser({ language: "de", fallbackLanguages: ["en", "fr"] }))).toEqual(["de", "en", "fr"]);
+  });
+});
+
+describe("availableIn", () => {
+  it("is true when a fallback language matches", () => {
+    const article = makeArticle({ id: "a", languages: ["hr", "en"] });
+    expect(availableIn(article, ["de", "en"])).toBe(true);
+  });
+
+  it("is false when no language matches", () => {
+    const article = makeArticle({ id: "a", languages: ["hr"] });
+    expect(availableIn(article, ["de", "en"])).toBe(false);
   });
 });
 

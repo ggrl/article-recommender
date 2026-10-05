@@ -8,6 +8,11 @@ export function userLanguages(user: UserContext): string[] {
   return [user.language, ...user.fallbackLanguages];
 }
 
+/** True when the article is published in one of the given languages, main or fallback. */
+export function availableIn(article: Article, languages: string[]): boolean {
+  return article.languages.some((l) => languages.includes(l));
+}
+
 export function buildFilter(user: UserContext, maxAgeDays: number, now: Date, anchorId?: ArticleId): CandidateFilter {
   return {
     statuses: ["published"],

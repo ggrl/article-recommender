@@ -1,4 +1,4 @@
-import { userLanguages } from "../candidates.ts";
+import { availableIn, userLanguages } from "../candidates.ts";
 import { compareIds } from "../order.ts";
 import type { Article, ArticleId, EditorPin, UserContext } from "../types.ts";
 
@@ -17,7 +17,7 @@ export function activePins(
       article !== undefined &&
       pin.startsAt.getTime() <= t &&
       t < pin.expiresAt.getTime() &&
-      article.languages.some((l) => languages.includes(l)) &&
+      availableIn(article, languages) &&
       (pin.languages === undefined || pin.languages.includes(user.language)) &&
       (pin.regions === undefined || (user.region !== undefined && pin.regions.includes(user.region)))
     );

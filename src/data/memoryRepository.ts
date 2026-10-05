@@ -1,3 +1,4 @@
+import { availableIn } from "../engine/candidates.ts";
 import { newestFirst } from "../engine/order.ts";
 import { sharesSource } from "../engine/scoring/similarity.ts";
 import type { Article, ArticleId, CandidateFilter, DayRange, EditorPin, ReadAggregate } from "../engine/types.ts";
@@ -16,7 +17,7 @@ export function createMemoryRepository(data: MemoryData): Repository {
     const excluded = new Set(filter.excludeIds);
     return (a: Article) =>
       filter.statuses.includes(a.status) &&
-      a.languages.some((l) => filter.languages.includes(l)) &&
+      availableIn(a, filter.languages) &&
       !excluded.has(a.id) &&
       a.publishedAt.getTime() >= filter.publishedSince.getTime();
   };
