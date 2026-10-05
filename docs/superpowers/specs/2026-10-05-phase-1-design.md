@@ -15,7 +15,8 @@ surprise slots are phase 2 and get their own design.
 ## Structure
 
 Folders follow work order 2.3, minus the phase 2 files (`topics.ts`, `follows.ts`,
-`quotas.ts`).
+`quotas.ts`), plus `src/engine/order.ts` (the shared tie-break, D7) and
+`src/http/main.ts` (starts the demo, so tests can import `server.ts` without it).
 
 **Entry point.** `createRecommender({ repository, config })` validates the config
 and returns `{ recommend }`. An invalid config throws here, so it fails at startup.
@@ -52,8 +53,9 @@ only executes it (the in-memory one as a predicate, a later SQL adapter as `WHER
 - pools: `recent(filter, n)`, `popular(filter, fromDay, toDay, n)`,
   `similar(anchor, filter, n)` (shares at least one topic, newest first),
   `sameSource(anchor, filter, n)` (same publisher or a shared community, newest first)
-- loads: `getArticles(ids)`, `getPublishers(ids)`, `getReads(ids, fromDay, toDay)`,
-  `listPins()`
+- loads: `getArticles(ids)`, `getReads(ids, window)`, `listPins()`
+
+Phase 1 has no use for publisher records, so the repository does not load them.
 
 Which pin is active and which days fall in the window are engine decisions.
 
@@ -97,4 +99,5 @@ optional ISO string; when absent, `/http` substitutes the server clock.
 - `npm run verify`: type check, then ESLint with `typescript-eslint` (catches an
   explicit `any`, which strict TypeScript allows), then tests. Recorded in AGENTS.md
   section 8 once it exists.
-- Running `.ts` directly: to be checked against Node 22.23 in the plan; `tsx` if not.
+- Node 22.23 runs `.ts` directly (checked 2026-10-05), so there is no `tsx`. This
+  needs `import type` for types and no enums, namespaces or parameter properties.
