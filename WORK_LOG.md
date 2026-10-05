@@ -1,5 +1,40 @@
 # Work log
 
+## 2026-10-06 - Phase 2a: topics and follows
+
+- **What changed:** the feed is personalised. New criteria `src/engine/scoring/topics.ts`
+  and `follows.ts`; criteria may attach a `detail` to a score (`CriterionScore` in
+  `src/engine/types.ts`, copied into the breakdown by `scoring/index.ts`);
+  `ScoringContext` carries the user. New repository pools `follows` and `topics`
+  (`src/data/repository.ts`, `memoryRepository.ts`), wired in `feedPools`
+  (`src/engine/candidates.ts`) with size 0 when the user has nothing. New reasons in
+  `src/engine/explain.ts`. Feed config gains `topics`/`follows` weights (0.8) and
+  pools (100). README updated. Design `docs/superpowers/specs/2026-10-05-phase-2a-design.md`,
+  plan `docs/superpowers/plans/2026-10-05-phase-2a.md`, rulings D18 to D24.
+- **Why:** work order phase 2, first part. Phase 2 was split (D18): quotas,
+  exploration and surprise slots are 2b, waiting on the client's quota semantics.
+  The work order's topics formula could exceed 1; fixed to divide-then-clamp (D19).
+- **Verified:** `npm run verify` green on main after merge and again at this save:
+  15 files, 141 tests, type check and lint clean. Six subagent tasks, each with a
+  task review; whole-branch review plus one fix wave, re-reviewed; security review
+  SHIP. The ranking test was proven able to fail by mutation. A subagent ran the
+  demo and got topic and follow reasons in a live response; I did not run it myself.
+  Feed timing on seed data: about 1.2 ms cold start, 1.8 ms for user u1 (subagent
+  measurement). Merged to main and pushed (`origin/main` at `732c582`).
+- **Not verified:** no real client data. How much of a personalised feed is older
+  than a few days was not measured (see D24).
+- **Known and accepted:** with default weights, matched articles outrank fresh
+  unmatched ones at almost any age (D24); weights get tuned later in
+  `config/default.json`, raise with the client. Follow reasons are generic (D21).
+  Topic names from the request are echoed in `detail` and reasons: safe as JSON,
+  but a future frontend must escape them. Unbounded user lists stay accepted for the
+  local demo (D17, D23).
+- **Next step:** phase 2b (exploration pool, surprise slots, quotas) once the client
+  answers what a quota means; or tune weights against seed users.
+- **Surprises:** the plan's own ranking test passed without the feature (alphabetical
+  IDs matched the expected order); the task review caught it. Some fix commits carry
+  a "Claude Sonnet 5" co-author line because that model wrote them.
+
 ## 2026-10-05 (later) - Pins pass the hard filters
 
 - **Answered the open questions from the entry below.** The `similar` pool stays
