@@ -4,8 +4,9 @@ Prototype recommendation engine for a multilingual, non-profit European news
 platform. One explainable engine serves the personalised feed and "read next"
 suggestions. It runs on synthetic seed data; there is no real client data here.
 
-The work order is `display-europe-recommender-prototype.md`, the phase 1 design is
-in `docs/superpowers/specs/`, and settled rulings are in `DECISIONS.md`.
+The work order is `display-europe-recommender-prototype.md`, the design notes
+(phase 1 and phase 2a) are in `docs/superpowers/specs/`, and settled rulings are
+in `DECISIONS.md`.
 
 ## Setup
 
@@ -37,7 +38,8 @@ A ranked item carries `breakdown` (score, weight and contribution per
 criterion), `sourcePools` and human-readable `reasons`. A pin item carries the
 editor's note as `reasons` and `pinNote`, `finalScore: null`, and an empty
 `breakdown` and `sourcePools`. The `topics` and `follows` entries also carry
-`detail`: the matched topic, or `publisher` / `community`.
+`detail` when they matched: for `topics` it is the strongest matched topic, for
+`follows` it is `publisher` or `community`.
 
 ## Configuration
 
