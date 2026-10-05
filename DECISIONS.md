@@ -235,5 +235,7 @@ old ruling silently.
 
 - **Decision:** from 2a on, `followedPublishers`, `followedCommunities` and
   `topicInterests` are read by the engine. The unbounded-input limit in D17 applies
-  to them as well; the same `.max()` fix covers them.
+  to them as well. `followedPublishers` and `followedCommunities` are arrays, so the
+  same `.max()` fix covers them; `topicInterests` is a `z.record` with no `.max()`,
+  so it needs a refine on its key count instead.
 - **Consequences:** none until the demo is exposed (D17).
