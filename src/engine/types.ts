@@ -22,6 +22,12 @@ export interface ScoringContext {
   anchor?: Article;
 }
 
+/** Inclusive range of UTC days, formatted YYYY-MM-DD. */
+export interface DayRange {
+  fromDay: string;
+  toDay: string;
+}
+
 /** Scores the whole candidate set at once (D5). Every score lies in [0, 1]. */
 export interface Criterion {
   id: string;
