@@ -25,6 +25,17 @@ describe("on seed data", () => {
     }
   });
 
+  it("never exceeds the per-publisher cap in the cold-start feed", async () => {
+    const byId = new Map(data.articles.map((a) => [a.id, a] as const));
+    const { items } = await recommender.recommend(feed);
+    const counts = new Map<string, number>();
+    for (const item of items.filter((i) => i.slotType === "ranked")) {
+      const publisherId = byId.get(item.articleId)?.publisherId;
+      if (publisherId !== undefined) counts.set(publisherId, (counts.get(publisherId) ?? 0) + 1);
+    }
+    for (const count of counts.values()) expect(count).toBeLessThanOrEqual(3);
+  });
+
   it("serves a feed over 2,000 articles in under 100 ms", async () => {
     await recommender.recommend(feed); // warm-up, so start-up cost is not measured
     const times: number[] = [];

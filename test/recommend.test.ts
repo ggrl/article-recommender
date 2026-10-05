@@ -57,6 +57,7 @@ describe("feed", () => {
     const { items } = await recommender().recommend(feed({ user }));
     const ids = items.map((i) => i.articleId);
     expect(new Set(ids).size).toBe(ids.length);
+    expect(ids).toContain("multi");
     expect(items.find((i) => i.articleId === "hit")?.sourcePools).toEqual(["recent", "popular"]);
   });
 
