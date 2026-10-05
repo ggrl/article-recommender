@@ -1,7 +1,5 @@
 # Display Europe Recommender: Prototype Plan and Work Order
 
-*Legal-Pythia LLP, internal. Status: draft for discovery week. Not a delivery commitment.*
-
 ---
 
 ## Part 1: Prototype summary
