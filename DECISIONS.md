@@ -178,3 +178,62 @@ old ruling silently.
 - **Consequences:** exposing the demo publicly requires both fixes first. That
   includes indirect exposure: a container port mapping or a reverse proxy in front
   of the 127.0.0.1 listener counts as public.
+
+## 18. Phase 2 is split into 2a and 2b (2026-10-05)
+
+- **Context:** what a quota means ("30% of the feed": guaranteed share or ranking
+  bias) and what counts as "surprise" are still open client questions. Exploration
+  only shows anything with reserved slots, which are the same open question.
+- **Decision:** 2a is the topics and follows criteria with their pools. 2b is the
+  exploration pool, surprise slots and quota assembly.
+- **Alternatives considered:** all of phase 2 at once on a stand-in quota meaning;
+  an exploration pool in 2a without slots, which would almost never show anything.
+- **Consequences:** the request `seed` (D9) stays out until 2b.
+
+## 19. Topics score: divide, then clamp (2026-10-05)
+
+- **Context:** work order 2.8 gives `min(1, Σ interests) / maxInterest`, which can
+  exceed 1 (interests 0.3 and 0.3, both matched: `0.6 / 0.3 = 2`). Every criterion
+  must lie in [0, 1].
+- **Decision:** supersedes that formula: `min(1, Σ interests / maxInterest)`.
+  Matching the strongest interest still gives 1, as the work order intends.
+- **Alternatives considered:** best single match; share of all interests covered.
+- **Consequences:** several weaker matches can add up to a full score.
+
+## 20. Topics details (2026-10-05)
+
+- **Decision:** `maxInterest` is the user's highest interest over all topics, not
+  only the matching ones. An interest of 0 counts as no interest: it does not score
+  and does not feed the topics pool. The reason names the matching topic with the
+  highest interest; on a tie, the alphabetically first.
+- **Alternatives considered:** normalising by the best matching interest only,
+  which would give every match a full score.
+- **Consequences:** output is deterministic; an article matching only a weak
+  interest scores proportionally lower.
+
+## 21. Generic follow reasons (2026-10-05)
+
+- **Context:** the work order's "From {community/publisher} you follow" needs a
+  name. The data has publisher records the engine does not load and no community
+  names at all.
+- **Decision:** "From a publisher you follow" or "From a community you follow". When
+  both match, the publisher wins.
+- **Alternatives considered:** loading publisher names and inventing a community
+  type; showing raw IDs.
+- **Consequences:** only the reason text changes when names become available.
+
+## 22. Criteria may attach a detail to a score (2026-10-05)
+
+- **Context:** a reason like "Matches your interest in gardening" needs the matched
+  topic; breakdown entries held numbers only.
+- **Decision:** a criterion's score map holds a number or `{ score, detail }`;
+  `detail` is copied to the breakdown entry and is visible in the API response.
+- **Alternatives considered:** a second per-criterion method returning details.
+- **Consequences:** phase 1 criteria are unchanged.
+
+## 23. D17 covers the lists phase 2a starts using (2026-10-05)
+
+- **Decision:** from 2a on, `followedPublishers`, `followedCommunities` and
+  `topicInterests` are read by the engine. The unbounded-input limit in D17 applies
+  to them as well; the same `.max()` fix covers them.
+- **Consequences:** none until the demo is exposed (D17).
