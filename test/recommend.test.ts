@@ -127,7 +127,7 @@ describe("personalised feed", () => {
     articles: [
       makeArticle({ id: "followed", publisherId: "p9", publishedAt: hoursAgo(10) }),
       makeArticle({ id: "garden", publisherId: "p10", publishedAt: hoursAgo(10), topics: ["gardening"] }),
-      makeArticle({ id: "other", publisherId: "p11", publishedAt: hoursAgo(10) }),
+      makeArticle({ id: "aaa-other", publisherId: "p11", publishedAt: hoursAgo(10) }),
     ],
     reads: [],
     pins: [],
@@ -137,7 +137,7 @@ describe("personalised feed", () => {
 
   it("ranks followed and interesting articles above an unrelated one of the same age", async () => {
     const { items } = await personal().recommend(feed({ user }));
-    expect(items.map((i) => i.articleId)).toEqual(["followed", "garden", "other"]);
+    expect(items.map((i) => i.articleId)).toEqual(["followed", "garden", "aaa-other"]);
   });
 
   it("explains a follow and a topic match", async () => {
