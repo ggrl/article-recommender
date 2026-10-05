@@ -58,7 +58,7 @@ There is **no access to real client data yet**. Build against a repository inter
 ### 2.2 Tech constraints
 
 - TypeScript (strict mode), Node.js LTS
-- Package manager: pnpm (or npm if simpler)
+- Package manager: npm
 - Tests: Vitest
 - Config validation: Zod
 - HTTP demo layer: Fastify, kept thin and separate from engine code
@@ -280,7 +280,7 @@ Order of operations:
 ### 2.13 Deliverables and acceptance criteria
 
 **Phase 1 is done when:**
-- [ ] `pnpm test` passes, with strict TypeScript and no `any` in engine code
+- [ ] `npm test` passes, with strict TypeScript and no `any` in engine code
 - [ ] `recommend()` works for `feed` and `readNext` with recency, popularity, similarity and pins
 - [ ] Config is validated; an invalid config fails loudly at startup
 - [ ] Every item carries a breakdown and at least one reason
