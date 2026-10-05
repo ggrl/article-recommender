@@ -1,0 +1,13 @@
+# macOS
+.DS_Store
+
+# Local environment. Listed here before any such file is created.
+.env
+.env.*
+
+# agent instructions
+AGENTS.md
+CLAUDE.md
+.agents/
+.claude/
+rules/
