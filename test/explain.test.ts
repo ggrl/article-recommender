@@ -26,4 +26,18 @@ describe("reasonsFor", () => {
   it("throws for a criterion without a template", () => {
     expect(() => reasonsFor({ mystery: entry(1) }, 7)).toThrow(/mystery/);
   });
+
+  it("names the matched topic", () => {
+    expect(reasonsFor({ topics: { ...entry(0.5), detail: "gardening" } }, 7)).toEqual(["Matches your interest in gardening"]);
+  });
+
+  it("says which kind of follow matched", () => {
+    expect(reasonsFor({ follows: { ...entry(0.8), detail: "publisher" } }, 7)).toEqual(["From a publisher you follow"]);
+    expect(reasonsFor({ follows: { ...entry(0.8), detail: "community" } }, 7)).toEqual(["From a community you follow"]);
+  });
+
+  it("throws for a topics or follows reason without its detail", () => {
+    expect(() => reasonsFor({ topics: entry(0.5) }, 7)).toThrow(/needs the matched topic/);
+    expect(() => reasonsFor({ follows: entry(0.5) }, 7)).toThrow(/needs "publisher" or "community"/);
+  });
 });
