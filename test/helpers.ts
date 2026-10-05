@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { parseConfig, type Config } from "../src/engine/config.ts";
-import type { Article, ScoringContext } from "../src/engine/types.ts";
+import type { Article, ScoringContext, UserContext } from "../src/engine/types.ts";
 
 export function loadDefaultConfig(): Config {
   return parseConfig(JSON.parse(readFileSync(new URL("../config/default.json", import.meta.url), "utf8")));
@@ -30,4 +30,16 @@ export function makeArticle(overrides: Partial<Article> & { id: string }): Artic
 
 export function makeContext(overrides: Partial<ScoringContext> = {}): ScoringContext {
   return { now: NOW, profile: loadDefaultConfig().profiles.feed, reads: new Map(), ...overrides };
+}
+
+export function makeUser(overrides: Partial<UserContext> = {}): UserContext {
+  return {
+    language: "en",
+    fallbackLanguages: [],
+    topicInterests: {},
+    followedCommunities: [],
+    followedPublishers: [],
+    readArticleIds: [],
+    ...overrides,
+  };
 }

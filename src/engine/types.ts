@@ -1,3 +1,4 @@
+import { z } from "zod";
 import type { Profile } from "./config.ts";
 
 export type ArticleId = string; // canonical ID, shared by all translations
@@ -75,3 +76,15 @@ export interface CandidateFilter {
   excludeIds: ArticleId[];
   publishedSince: Date; // inclusive
 }
+
+export const userContextSchema = z.strictObject({
+  userId: z.string().min(1).optional(), // anonymous users must work
+  language: z.string().min(1),
+  fallbackLanguages: z.array(z.string().min(1)),
+  topicInterests: z.record(z.string(), z.number().min(0)),
+  followedCommunities: z.array(z.string()),
+  followedPublishers: z.array(z.string()),
+  readArticleIds: z.array(z.string()),
+  region: z.string().min(1).optional(), // explicit user setting, not IP-derived
+});
+export type UserContext = z.infer<typeof userContextSchema>;
