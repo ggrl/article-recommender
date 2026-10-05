@@ -50,3 +50,28 @@ export interface ScoredCandidate extends Candidate {
   finalScore: number;
   breakdown: Record<string, BreakdownEntry>;
 }
+
+/** Aggregate reads per article and day; no user IDs. */
+export interface ReadAggregate {
+  articleId: ArticleId;
+  day: string; // YYYY-MM-DD
+  reads: number;
+}
+
+export interface EditorPin {
+  articleId: ArticleId;
+  note: string;
+  position: number; // 0-based slot in the final list
+  startsAt: Date;
+  expiresAt: Date;
+  languages?: string[];
+  regions?: string[];
+}
+
+/** Hard filters, built by the engine and applied inside every pool query (D4). */
+export interface CandidateFilter {
+  statuses: Article["status"][];
+  languages: string[];
+  excludeIds: ArticleId[];
+  publishedSince: Date; // inclusive
+}

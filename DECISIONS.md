@@ -83,3 +83,12 @@ old ruling silently.
 - **Decision:** the request has no `seed` field until phase 2 needs it.
 - **Alternatives considered:** accept and ignore it.
 - **Consequences:** adding the optional field later is not breaking.
+
+## 10. The popular pool leaves out articles without reads (2026-10-05)
+
+- **Context:** the work order says the popular pool returns up to N IDs but not
+  what fills it when fewer than N articles have reads.
+- **Decision:** only articles with at least one read in the window qualify.
+- **Alternatives considered:** padding with zero-read articles.
+- **Consequences:** "popular" in `sourcePools` always means read at least once; the
+  recent pool still covers cold start.
