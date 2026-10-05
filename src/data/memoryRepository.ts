@@ -1,6 +1,7 @@
 import { articleFilter } from "../engine/candidates.ts";
 import { newestFirst } from "../engine/order.ts";
 import { sharesSource } from "../engine/scoring/similarity.ts";
+import { followMatch } from "../engine/scoring/follows.ts";
 import type { Article, ArticleId, DayRange, EditorPin, ReadAggregate } from "../engine/types.ts";
 import type { Repository } from "./repository.ts";
 
@@ -46,6 +47,18 @@ export function createMemoryRepository(data: MemoryData): Repository {
     async sameSource(anchor, filter, limit) {
       const ok = articleFilter(filter);
       return firstIds(data.articles.filter((a) => ok(a) && sharesSource(a, anchor)).sort(newestFirst), limit);
+    },
+    async follows(filter, publishers, communities, limit) {
+      const ok = articleFilter(filter);
+      return firstIds(
+        data.articles.filter((a) => ok(a) && followMatch(a, publishers, communities) !== undefined).sort(newestFirst),
+        limit,
+      );
+    },
+    async topics(filter, topics, limit) {
+      const wanted = new Set(topics);
+      const ok = articleFilter(filter);
+      return firstIds(data.articles.filter((a) => ok(a) && a.topics.some((t) => wanted.has(t))).sort(newestFirst), limit);
     },
     async getArticles(ids) {
       return ids.flatMap((id) => byId.get(id) ?? []);

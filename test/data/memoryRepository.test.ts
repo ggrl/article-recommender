@@ -85,6 +85,29 @@ describe("similar and sameSource", () => {
   });
 });
 
+describe("follows and topics", () => {
+  const repo = createMemoryRepository({
+    articles: [
+      makeArticle({ id: "byPublisher", publisherId: "p1", publishedAt: hoursAgo(3) }),
+      makeArticle({ id: "byCommunity", publisherId: "p2", communityIds: ["c1"], publishedAt: hoursAgo(2) }),
+      makeArticle({ id: "withdrawn", publisherId: "p1", status: "withdrawn", publishedAt: hoursAgo(1) }),
+      makeArticle({ id: "gardening", publisherId: "p3", topics: ["gardening"], publishedAt: hoursAgo(4) }),
+      makeArticle({ id: "unrelated", publisherId: "p4", topics: ["sport"], publishedAt: hoursAgo(5) }),
+    ],
+    reads: [],
+    pins: [],
+  });
+
+  it("follows returns followed publishers and communities newest first, filtered before the limit", async () => {
+    expect(await repo.follows(filter(), ["p1"], ["c1"], 10)).toEqual(["byCommunity", "byPublisher"]);
+    expect(await repo.follows(filter(), ["p1"], ["c1"], 1)).toEqual(["byCommunity"]);
+  });
+
+  it("topics returns articles sharing a given topic", async () => {
+    expect(await repo.topics(filter(), ["gardening", "climate"], 10)).toEqual(["gardening"]);
+  });
+});
+
 describe("loads", () => {
   const repo = createMemoryRepository({
     articles: [makeArticle({ id: "a" }), makeArticle({ id: "b" })],
