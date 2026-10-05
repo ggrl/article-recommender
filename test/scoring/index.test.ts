@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { criteria, scoreCandidates } from "../../src/engine/scoring/index.ts";
-import type { Article, ArticleId, Criterion } from "../../src/engine/types.ts";
+import type { Article, ArticleId, Criterion, CriterionScore } from "../../src/engine/types.ts";
 import { makeArticle, makeContext } from "../helpers.ts";
 
 const constant = (id: string, value: number): Criterion => ({
@@ -35,5 +35,21 @@ describe("scoreCandidates", () => {
 
   it("registers the phase 1 criteria", () => {
     expect(criteria.map((c) => c.id)).toEqual(["recency", "popularity", "similarity"]);
+  });
+
+  it("copies a criterion's detail into the breakdown", () => {
+    const detailed: Criterion = {
+      id: "d",
+      score: (articles: Article[]) =>
+        new Map(articles.map((a): [ArticleId, CriterionScore] => [a.id, { score: 0.5, detail: "gardening" }])),
+    };
+    const [scored] = scoreCandidates(candidates, { d: 1 }, makeContext(), [detailed]);
+    expect(scored?.breakdown.d).toEqual({ score: 0.5, weight: 1, contribution: 0.5, detail: "gardening" });
+    expect(scored?.finalScore).toBe(0.5);
+  });
+
+  it("gives a plain-number criterion no detail", () => {
+    const [scored] = scoreCandidates(candidates, { one: 1 }, makeContext(), [constant("one", 1)]);
+    expect(scored?.breakdown.one).not.toHaveProperty("detail");
   });
 });

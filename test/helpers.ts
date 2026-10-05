@@ -29,7 +29,7 @@ export function makeArticle(overrides: Partial<Article> & { id: string }): Artic
 }
 
 export function makeContext(overrides: Partial<ScoringContext> = {}): ScoringContext {
-  return { now: NOW, profile: loadDefaultConfig().profiles.feed, reads: new Map(), ...overrides };
+  return { now: NOW, profile: loadDefaultConfig().profiles.feed, user: makeUser(), reads: new Map(), ...overrides };
 }
 
 export function makeUser(overrides: Partial<UserContext> = {}): UserContext {

@@ -65,7 +65,7 @@ export function createRecommender(deps: { repository: Repository; config: unknow
       const ids = [...union.keys()];
       const [articles, reads] = await Promise.all([repo.getArticles(ids), repo.getReads(ids, window)]);
       const candidates = articles.map((article) => ({ article, sourcePools: union.get(article.id) ?? [] }));
-      const scored = scoreCandidates(candidates, profile.weights, { now, profile, reads, anchor });
+      const scored = scoreCandidates(candidates, profile.weights, { now, profile, user, reads, anchor });
       const assembled = assemble(scored, pins, limit, profile.diversity.maxPerPublisher);
 
       return {

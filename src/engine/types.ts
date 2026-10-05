@@ -18,6 +18,7 @@ export interface Article {
 export interface ScoringContext {
   now: Date;
   profile: Profile;
+  user: UserContext;
   /** Total reads per article in the profile's popularity window. */
   reads: Map<ArticleId, number>;
   anchor?: Article;
@@ -29,10 +30,13 @@ export interface DayRange {
   toDay: string;
 }
 
+/** A score in [0, 1], optionally with what matched, for the reason text (D22). */
+export type CriterionScore = number | { score: number; detail: string };
+
 /** Scores the whole candidate set at once (D5). Every score lies in [0, 1]. */
 export interface Criterion {
   id: string;
-  score(candidates: Article[], ctx: ScoringContext): Map<ArticleId, number>;
+  score(candidates: Article[], ctx: ScoringContext): Map<ArticleId, CriterionScore>;
 }
 
 export interface Candidate {
@@ -45,6 +49,7 @@ export interface BreakdownEntry {
   score: number;
   weight: number;
   contribution: number;
+  detail?: string;
 }
 
 export interface ScoredCandidate extends Candidate {

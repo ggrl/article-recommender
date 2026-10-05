@@ -21,8 +21,11 @@ export function scoreCandidates(
     const breakdown: Record<string, BreakdownEntry> = {};
     let sum = 0;
     for (const { id, weight, scores } of results) {
-      const score = scores.get(article.id) ?? 0;
-      breakdown[id] = { score, weight, contribution: weight * score };
+      const value = scores.get(article.id) ?? 0;
+      const score = typeof value === "number" ? value : value.score;
+      const entry: BreakdownEntry = { score, weight, contribution: weight * score };
+      if (typeof value !== "number") entry.detail = value.detail;
+      breakdown[id] = entry;
       sum += weight * score;
     }
     return { article, sourcePools, finalScore: sum / totalWeight, breakdown };
