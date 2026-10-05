@@ -1,7 +1,7 @@
-import { availableIn } from "../engine/candidates.ts";
+import { articleFilter } from "../engine/candidates.ts";
 import { newestFirst } from "../engine/order.ts";
 import { sharesSource } from "../engine/scoring/similarity.ts";
-import type { Article, ArticleId, CandidateFilter, DayRange, EditorPin, ReadAggregate } from "../engine/types.ts";
+import type { Article, ArticleId, DayRange, EditorPin, ReadAggregate } from "../engine/types.ts";
 import type { Repository } from "./repository.ts";
 
 export interface MemoryData {
@@ -12,15 +12,6 @@ export interface MemoryData {
 
 export function createMemoryRepository(data: MemoryData): Repository {
   const byId = new Map(data.articles.map((a) => [a.id, a] as const));
-
-  const matches = (filter: CandidateFilter) => {
-    const excluded = new Set(filter.excludeIds);
-    return (a: Article) =>
-      filter.statuses.includes(a.status) &&
-      availableIn(a, filter.languages) &&
-      !excluded.has(a.id) &&
-      a.publishedAt.getTime() >= filter.publishedSince.getTime();
-  };
 
   const readsIn = (window: DayRange) => {
     const totals = new Map<ArticleId, number>();
@@ -36,11 +27,11 @@ export function createMemoryRepository(data: MemoryData): Repository {
 
   return {
     async recent(filter, limit) {
-      return firstIds(data.articles.filter(matches(filter)).sort(newestFirst), limit);
+      return firstIds(data.articles.filter(articleFilter(filter)).sort(newestFirst), limit);
     },
     async popular(filter, window, limit) {
       const totals = readsIn(window);
-      const ok = matches(filter);
+      const ok = articleFilter(filter);
       const reads = (a: Article) => totals.get(a.id) ?? 0;
       return firstIds(
         data.articles.filter((a) => reads(a) > 0 && ok(a)).sort((a, b) => reads(b) - reads(a) || newestFirst(a, b)),
@@ -49,11 +40,11 @@ export function createMemoryRepository(data: MemoryData): Repository {
     },
     async similar(anchor, filter, limit) {
       const topics = new Set(anchor.topics);
-      const ok = matches(filter);
+      const ok = articleFilter(filter);
       return firstIds(data.articles.filter((a) => ok(a) && a.topics.some((t) => topics.has(t))).sort(newestFirst), limit);
     },
     async sameSource(anchor, filter, limit) {
-      const ok = matches(filter);
+      const ok = articleFilter(filter);
       return firstIds(data.articles.filter((a) => ok(a) && sharesSource(a, anchor)).sort(newestFirst), limit);
     },
     async getArticles(ids) {

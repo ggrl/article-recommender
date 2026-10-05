@@ -10,12 +10,13 @@ const data: MemoryData = {
     makeArticle({ id: "multi", publisherId: "p3", languages: ["en", "de", "hr"], publishedAt: hoursAgo(5) }),
     makeArticle({ id: "withdrawn", publisherId: "p4", status: "withdrawn", publishedAt: hoursAgo(1) }),
     makeArticle({ id: "anchor", publisherId: "p5", publishedAt: hoursAgo(50), topics: ["x"] }),
-    makeArticle({ id: "pinned", publisherId: "p6", publishedAt: hoursAgo(2000) }),
+    makeArticle({ id: "pinned", publisherId: "p6", publishedAt: hoursAgo(200) }),
   ],
   reads: [{ articleId: "hit", day: "2026-10-05", reads: 40 }],
   pins: [
     makePin({ articleId: "pinned", position: 0, note: "Our pick" }),
     makePin({ articleId: "fresh", position: 1, expiresAt: hoursAgo(1) }),
+    makePin({ articleId: "withdrawn", position: 2 }),
   ],
 };
 const recommender = (config: unknown = loadDefaultConfig()) =>
@@ -36,13 +37,20 @@ describe("feed", () => {
       expect(Object.keys(item.breakdown)).toEqual(["recency", "popularity"]);
       expect(item.reasons.length).toBeGreaterThan(0);
     }
-    expect(meta).toEqual({ configVersion: "2026-10-proto-1", candidateCount: 4, profile: "feed" });
+    expect(meta).toEqual({ configVersion: "2026-10-proto-1", candidateCount: 5, profile: "feed" });
   });
 
   it("puts an active pin at its position and never an expired one", async () => {
     const { items } = await recommender().recommend(feed());
     expect(items[0]).toMatchObject({ articleId: "pinned", slotType: "pin", finalScore: null, reasons: ["Our pick"], pinNote: "Our pick" });
     expect(items.filter((i) => i.slotType === "pin")).toHaveLength(1);
+  });
+
+  it("never shows a pin on a withdrawn or already read article", async () => {
+    const withdrawnPin = await recommender().recommend(feed());
+    expect(withdrawnPin.items.map((i) => i.articleId)).not.toContain("withdrawn");
+    const readPin = await recommender().recommend(feed({ user: makeUser({ readArticleIds: ["pinned"] }) }));
+    expect(readPin.items.some((i) => i.slotType === "pin")).toBe(false);
   });
 
   it("never returns a withdrawn or already read article", async () => {

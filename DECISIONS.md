@@ -134,3 +134,44 @@ old ruling silently.
   dependency for the same result.
 - **Consequences:** removing the ignore line brings those errors back; a contributor
   without those folders sees no difference.
+
+## 15. The similar pool stays newest-first (2026-10-05)
+
+- **Context:** the final phase 1 review noted that the read-next `similar` pool takes
+  the 100 newest articles sharing a topic with the anchor (work order 2.7), so an
+  older close match can miss the pool. Estimated about 170 matches for 100 slots on
+  seed data; not measured.
+- **Decision:** keep it as the work order defines it, for now.
+- **Alternatives considered:** order the pool by shared-topic count, then newest.
+- **Consequences:** read next can miss older close matches unless the `sameSource`
+  or `popular` pool finds them. Revisit when embeddings replace tag overlap.
+
+## 16. Pins pass the hard filters (2026-10-05)
+
+- **Context:** work order 2.9 says pins "ignore all scores and filters except language
+  availability", so a pin on a withdrawn, embargoed, already-read or too-old article
+  was still shown.
+- **Decision:** supersedes that part of work order 2.9 and amends D8. Pins still
+  ignore scores, the publisher cap and the pools, but their article must pass the
+  same hard filter as every candidate (D4): published, in a language the user reads,
+  not already read, not older than the feed's `maxAgeDays`. One check
+  (`articleFilter` in `src/engine/candidates.ts`) serves both.
+- **Alternatives considered:** checking status only.
+- **Consequences:** an editor's pin silently disappears once its article is
+  withdrawn, read or ages out; seed pins point at recent articles.
+
+## 17. Known demo security limits, accepted for now (2026-10-05)
+
+- **Context:** the phase 1 security pass found two issues, neither reachable while
+  the demo listens on 127.0.0.1 only.
+- **Decision:** leave both unfixed until the demo is exposed beyond localhost or a
+  real repository receives these lists:
+  1. User-context arrays (`fallbackLanguages`, `readArticleIds`, follows) have no
+     length limit. A request of about 1 MB with 240,000 fallback languages blocked
+     the server for about 1 s (measured). Fix: `.max()` on those arrays in
+     `userContextSchema` (`src/engine/types.ts`).
+  2. A `now` at the edge of the Date range (for example `-271821-04-20`) returns
+     500 "Invalid time value". Fix: range-check `now` in `recommendRequestSchema`.
+- **Alternatives considered:** fixing now, which defends against a scenario that
+  cannot happen on localhost.
+- **Consequences:** exposing the demo publicly requires both fixes first.

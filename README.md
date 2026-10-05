@@ -63,7 +63,5 @@ startup.
 - Phase 1 only: no topics, follows, quotas, exploration or surprise slots yet.
 - Similarity is topic-tag overlap; embeddings come later.
 - In-memory storage only; the seed data is regenerated at every start.
-- Pins ignore every filter except language, as the work order asks, so a
-  pinned article that was later withdrawn, embargoed, already read by the
-  user, or older than the profile's maxAgeDays is still shown until the pin
-  expires.
+- The demo is for local use only: it listens on 127.0.0.1, and request lists
+  have no size limits (see `DECISIONS.md` entry 17 before exposing it).

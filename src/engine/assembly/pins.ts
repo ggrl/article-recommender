@@ -1,15 +1,16 @@
-import { availableIn, userLanguages } from "../candidates.ts";
+import { articleFilter } from "../candidates.ts";
 import { compareIds } from "../order.ts";
-import type { Article, ArticleId, EditorPin, UserContext } from "../types.ts";
+import type { Article, ArticleId, CandidateFilter, EditorPin, UserContext } from "../types.ts";
 
-/** Pins ignore scores and filters except language availability (work order 2.9) and targeting (D8, D11). */
+/** Pins ignore scores but pass the same hard filters as every candidate (D16), plus their own time window and targeting (D8, D11). */
 export function activePins(
   pins: EditorPin[],
   articles: Map<ArticleId, Article>,
   user: UserContext,
   now: Date,
+  filter: CandidateFilter,
 ): EditorPin[] {
-  const languages = userLanguages(user);
+  const eligible = articleFilter(filter);
   const t = now.getTime();
   return pins.filter((pin) => {
     const article = articles.get(pin.articleId);
@@ -17,7 +18,7 @@ export function activePins(
       article !== undefined &&
       pin.startsAt.getTime() <= t &&
       t < pin.expiresAt.getTime() &&
-      availableIn(article, languages) &&
+      eligible(article) &&
       (pin.languages === undefined || pin.languages.includes(user.language)) &&
       (pin.regions === undefined || (user.region !== undefined && pin.regions.includes(user.region)))
     );

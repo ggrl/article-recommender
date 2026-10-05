@@ -78,7 +78,10 @@ export function generateSeed(seed: number, now: Date): SeedData {
     }
   }
 
-  const pinnable = articles.filter((a) => a.status === "published" && a.languages.includes("en"));
+  // Pins pass the feed filters (D16), so they point at recent English articles the cold-start user can see.
+  const pinnable = articles.filter(
+    (a) => a.status === "published" && a.languages.includes("en") && a.publishedAt.getTime() > now.getTime() - 30 * DAY_MS,
+  );
   const pins: EditorPin[] = [0, 3].map((position, i) => ({
     articleId: pinnable[i].id,
     note: i === 0 ? "Editor's pick" : "Featured this week",

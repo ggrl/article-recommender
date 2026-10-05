@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { assemble, type AssembledItem } from "../src/engine/assembly/index.ts";
 import { activePins, placePins } from "../src/engine/assembly/pins.ts";
+import { buildFilter } from "../src/engine/candidates.ts";
 import type { ScoredCandidate } from "../src/engine/types.ts";
-import { NOW, hoursAgo, makeArticle, makePin, makeUser } from "./helpers.ts";
+import { DAY_MS, NOW, hoursAgo, makeArticle, makePin, makeUser } from "./helpers.ts";
 
 const scored = (id: string, finalScore: number, publisherId = id, hours = 1): ScoredCandidate => ({
   article: makeArticle({ id, publisherId, publishedAt: hoursAgo(hours) }),
@@ -16,8 +17,12 @@ describe("activePins", () => {
   const articles = new Map([
     ["en", makeArticle({ id: "en", languages: ["en"] })],
     ["de", makeArticle({ id: "de", languages: ["de"] })],
+    ["withdrawn", makeArticle({ id: "withdrawn", status: "withdrawn" })],
+    ["embargoed", makeArticle({ id: "embargoed", status: "embargoed" })],
+    ["old", makeArticle({ id: "old", publishedAt: new Date(NOW.getTime() - 61 * DAY_MS) })],
   ]);
-  const active = (pin: ReturnType<typeof makePin>, user = makeUser()) => activePins([pin], articles, user, NOW).length === 1;
+  const active = (pin: ReturnType<typeof makePin>, user = makeUser()) =>
+    activePins([pin], articles, user, NOW, buildFilter(user, 60, NOW)).length === 1;
 
   it("keeps a running pin in a language the user reads", () => {
     expect(active(makePin({ articleId: "en" }))).toBe(true);
@@ -45,6 +50,19 @@ describe("activePins", () => {
   it("does not match a region-targeted pin for a user without a region", () => {
     expect(active(makePin({ articleId: "en", regions: ["HR"] }))).toBe(false);
     expect(active(makePin({ articleId: "en", regions: ["HR"] }), makeUser({ region: "HR" }))).toBe(true);
+  });
+
+  it("drops a pin whose article is withdrawn or embargoed", () => {
+    expect(active(makePin({ articleId: "withdrawn" }))).toBe(false);
+    expect(active(makePin({ articleId: "embargoed" }))).toBe(false);
+  });
+
+  it("drops a pin whose article the user already read", () => {
+    expect(active(makePin({ articleId: "en" }), makeUser({ readArticleIds: ["en"] }))).toBe(false);
+  });
+
+  it("drops a pin whose article is older than the maximum age", () => {
+    expect(active(makePin({ articleId: "old" }))).toBe(false);
   });
 
   it("drops a pin whose article does not exist", () => {

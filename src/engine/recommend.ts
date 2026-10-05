@@ -10,6 +10,7 @@ import { popularityWindow } from "./scoring/popularity.ts";
 import {
   recommendRequestSchema,
   type Article,
+  type CandidateFilter,
   type EditorPin,
   type RecommendRequest,
   type RecommendResponse,
@@ -32,11 +33,11 @@ export function createRecommender(deps: { repository: Repository; config: unknow
   const config = parseConfig(deps.config);
   const repo = deps.repository;
 
-  async function loadPins(request: RecommendRequest): Promise<Map<number, EditorPin>> {
+  async function loadPins(request: RecommendRequest, filter: CandidateFilter): Promise<Map<number, EditorPin>> {
     const pins = await repo.listPins();
     const articles = await repo.getArticles(pins.map((p) => p.articleId));
     const byId = new Map(articles.map((a) => [a.id, a] as const));
-    return placePins(activePins(pins, byId, request.user, request.now), request.limit);
+    return placePins(activePins(pins, byId, request.user, request.now, filter), request.limit);
   }
 
   return {
@@ -48,8 +49,11 @@ export function createRecommender(deps: { repository: Repository; config: unknow
 
       let anchor: Article | undefined;
       let pools: PoolQuery[];
+      let pinsLoaded: Promise<Map<number, EditorPin>> = Promise.resolve(new Map()); // pins are feed only (D3)
       if (request.mode === "feed") {
-        pools = feedPools(repo, buildFilter(user, profile.maxAgeDays, now), config.profiles.feed, window);
+        const filter = buildFilter(user, profile.maxAgeDays, now);
+        pools = feedPools(repo, filter, config.profiles.feed, window);
+        pinsLoaded = loadPins(request, filter);
       } else {
         [anchor] = await repo.getArticles([request.anchorArticleId]);
         if (anchor === undefined) throw new RequestError(`Unknown anchorArticleId: ${request.anchorArticleId}`);
@@ -57,10 +61,7 @@ export function createRecommender(deps: { repository: Repository; config: unknow
         pools = readNextPools(repo, filter, config.profiles.readNext, anchor, window);
       }
 
-      const [union, pins] = await Promise.all([
-        unionPools(pools),
-        request.mode === "feed" ? loadPins(request) : new Map<number, EditorPin>(), // pins are feed only (D3)
-      ]);
+      const [union, pins] = await Promise.all([unionPools(pools), pinsLoaded]);
       const ids = [...union.keys()];
       const [articles, reads] = await Promise.all([repo.getArticles(ids), repo.getReads(ids, window)]);
       const candidates = articles.map((article) => ({ article, sourcePools: union.get(article.id) ?? [] }));

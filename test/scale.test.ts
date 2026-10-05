@@ -14,6 +14,11 @@ describe("on seed data", () => {
     expect((await recommender.recommend(feed)).items).toHaveLength(20);
   });
 
+  it("shows both seed pins to the cold-start user at ranks 1 and 4", async () => {
+    const pins = (await recommender.recommend(feed)).items.filter((i) => i.slotType === "pin");
+    expect(pins.map((i) => i.rank)).toEqual([1, 4]);
+  });
+
   it("returns identical output for an identical request", async () => {
     expect(await recommender.recommend(feed)).toEqual(await recommender.recommend(feed));
   });

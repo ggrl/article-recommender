@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { createMemoryRepository } from "../src/data/memoryRepository.ts";
-import { availableIn, buildFilter, feedPools, readNextPools, unionPools, userLanguages } from "../src/engine/candidates.ts";
+import { articleFilter, availableIn, buildFilter, feedPools, readNextPools, unionPools, userLanguages } from "../src/engine/candidates.ts";
 import { DAY_MS, NOW, hoursAgo, loadDefaultConfig, makeArticle, makeUser } from "./helpers.ts";
 
 const window = { fromDay: "2026-09-29", toDay: "2026-10-05" };
@@ -18,6 +18,33 @@ describe("buildFilter", () => {
 
   it("also excludes the anchor in read next", () => {
     expect(buildFilter(makeUser({ readArticleIds: ["r1"] }), 365, NOW, "anchor").excludeIds).toEqual(["r1", "anchor"]);
+  });
+});
+
+describe("articleFilter", () => {
+  const filter = buildFilter(makeUser({ readArticleIds: ["read"] }), 60, NOW);
+  const passes = (overrides: Parameters<typeof makeArticle>[0]) => articleFilter(filter)(makeArticle(overrides));
+
+  it("passes a published, recent, unread article in a language the user reads", () => {
+    expect(passes({ id: "ok" })).toBe(true);
+  });
+
+  it("rejects a withdrawn or embargoed article", () => {
+    expect(passes({ id: "w", status: "withdrawn" })).toBe(false);
+    expect(passes({ id: "e", status: "embargoed" })).toBe(false);
+  });
+
+  it("rejects an article the user already read", () => {
+    expect(passes({ id: "read" })).toBe(false);
+  });
+
+  it("includes the age boundary and rejects anything older", () => {
+    expect(passes({ id: "edge", publishedAt: new Date(NOW.getTime() - 60 * DAY_MS) })).toBe(true);
+    expect(passes({ id: "old", publishedAt: new Date(NOW.getTime() - 60 * DAY_MS - 1) })).toBe(false);
+  });
+
+  it("rejects an article in no language the user reads", () => {
+    expect(passes({ id: "de", languages: ["de"] })).toBe(false);
   });
 });
 

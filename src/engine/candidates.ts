@@ -13,6 +13,16 @@ export function availableIn(article: Article, languages: string[]): boolean {
   return article.languages.some((l) => languages.includes(l));
 }
 
+/** The hard filters as one check (D4). Ranked candidates and pins both pass through it (D16). */
+export function articleFilter(filter: CandidateFilter): (article: Article) => boolean {
+  const excluded = new Set(filter.excludeIds);
+  return (a) =>
+    filter.statuses.includes(a.status) &&
+    availableIn(a, filter.languages) &&
+    !excluded.has(a.id) &&
+    a.publishedAt.getTime() >= filter.publishedSince.getTime();
+}
+
 export function buildFilter(user: UserContext, maxAgeDays: number, now: Date, anchorId?: ArticleId): CandidateFilter {
   return {
     statuses: ["published"],
