@@ -1,5 +1,29 @@
 # Work log
 
+## 2026-10-05 (later) - Pins pass the hard filters
+
+- **Answered the open questions from the entry below.** The `similar` pool stays
+  newest-first (D15). The two demo security limits stay unfixed, with their fixes
+  written down (D17). Pins must no longer show withdrawn, embargoed, already-read or
+  too-old articles (D16, supersedes that part of work order 2.9).
+- **What changed:** `articleFilter(filter)` in `src/engine/candidates.ts` is now the
+  single hard-filter predicate; `src/data/memoryRepository.ts` and `activePins` in
+  `src/engine/assembly/pins.ts` both use it. `src/engine/recommend.ts` builds the
+  feed filter once and passes it to pools and pin loading. `src/data/seed.ts` picks
+  pins from articles under 30 days old so the demo still shows them. README
+  limitation about pins replaced by a local-only note pointing to D17.
+- **Verified:** `npm run verify` green: 13 files, 112 tests, type check and lint
+  clean. New tests failed before the fix (RED seen). A deliberate mutation (pins
+  given the read-next filter) made the new end-to-end stale-pin test fail; reverted.
+  Logic review and security review both passed with no blockers. Merged to main and
+  pushed (`origin/main` at `1aa1323`).
+- **Not verified:** the demo server was not started this time; the seed pins at
+  ranks 1 and 4 are checked by `test/scale.test.ts`, not by a live request.
+- **Next step:** brainstorm phase 2 (topics, follows, quotas, exploration, surprise
+  slots). Quota semantics are still an open client question.
+- **Note:** the phase 1 plan document still describes the old pin behaviour; it is
+  historical, `DECISIONS.md` is the authority.
+
 ## 2026-10-05 - Setup and phase 1 engine
 
 - **Setup.** Filled AGENTS.md section 8 (gitignored, local only): project summary,
