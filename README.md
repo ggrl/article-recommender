@@ -29,15 +29,24 @@ curl -s -X POST http://127.0.0.1:3000/recommend -H 'content-type: application/js
   -d '{"mode":"feed","limit":5,"user":{"language":"en","fallbackLanguages":[],"topicInterests":{},"followedCommunities":[],"followedPublishers":[],"readArticleIds":[]}}'
 ```
 
-Every item carries `breakdown` (score, weight and contribution per criterion),
-`sourcePools` and human-readable `reasons`.
+The demo generates its seed data against the server clock at start-up, so a `now`
+far from start-up time gives odd results: articles dated after `now` count as
+brand new, and pins and read windows shift.
+
+A ranked item carries `breakdown` (score, weight and contribution per
+criterion), `sourcePools` and human-readable `reasons`. A pin item carries the
+editor's note as `reasons` and `pinNote`, `finalScore: null`, and an empty
+`breakdown` and `sourcePools`.
 
 ## Configuration
 
 `config/default.json` holds a `feed` and a `readNext` profile: maximum article age,
 pool sizes, criterion weights, recency half-life, popularity window and the
 per-publisher cap. A weight of 0 or a missing weight switches a criterion off.
-Unknown keys are an error, and an invalid config stops the server at startup.
+The `feed` profile accepts the weight keys `recency` and `popularity`; the
+`readNext` profile accepts `similarity`, `recency` and `popularity`. Any other
+weight key is a startup error, and an invalid config stops the server at
+startup.
 
 ## Adding a criterion
 
@@ -45,7 +54,8 @@ Unknown keys are an error, and an invalid config stops the server at startup.
    `score(candidates, ctx)` returning a score in [0, 1] per article.
 2. Register it in `criteria` in `src/engine/scoring/index.ts`.
 3. Add its weight key to the profile schema in `src/engine/config.ts`.
-4. Add its reason text to `reasonTemplates` and `reasonText` in
+4. Add its weight to `config/default.json` to switch it on.
+5. Add its reason text to `reasonTemplates` and `reasonText` in
    `src/engine/explain.ts`.
 
 ## Known limitations
@@ -53,5 +63,7 @@ Unknown keys are an error, and an invalid config stops the server at startup.
 - Phase 1 only: no topics, follows, quotas, exploration or surprise slots yet.
 - Similarity is topic-tag overlap; embeddings come later.
 - In-memory storage only; the seed data is regenerated at every start.
-- Pins ignore every filter except language, as the work order asks, so a pinned
-  article that was later withdrawn is still shown until the pin expires.
+- Pins ignore every filter except language, as the work order asks, so a
+  pinned article that was later withdrawn, embargoed, already read by the
+  user, or older than the profile's maxAgeDays is still shown until the pin
+  expires.
