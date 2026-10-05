@@ -119,3 +119,10 @@ export interface RecommendResponse {
   items: RecommendedItem[];
   meta: { configVersion: string; candidateCount: number; profile: Mode };
 }
+
+export interface Publisher {
+  id: string;
+  name: string;
+  country: string;
+  region?: string;
+}

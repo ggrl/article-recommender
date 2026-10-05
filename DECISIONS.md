@@ -112,3 +112,14 @@ old ruling silently.
 - **Alternatives considered:** naming the top criterion even at 0, which would state
   something false ("Popular this week" with no reads).
 - **Consequences:** reasons never claim a signal that is not there.
+
+## 13. Seed languages (2026-10-05)
+
+- **Context:** work order 2.11 asks for articles "in 5-8 languages", which reads
+  either as the corpus or as each article.
+- **Decision:** the corpus has 8 languages; each article has its original plus 0 to
+  4 translations.
+- **Alternatives considered:** every article in 5 to 8 languages, which would make
+  the language filter almost never exclude anything.
+- **Consequences:** language filtering and fallbacks have a visible effect in the
+  demo.
