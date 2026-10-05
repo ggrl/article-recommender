@@ -11,12 +11,14 @@ const data: MemoryData = {
     makeArticle({ id: "withdrawn", publisherId: "p4", status: "withdrawn", publishedAt: hoursAgo(1) }),
     makeArticle({ id: "anchor", publisherId: "p5", publishedAt: hoursAgo(50), topics: ["x"] }),
     makeArticle({ id: "pinned", publisherId: "p6", publishedAt: hoursAgo(200) }),
+    makeArticle({ id: "stale", publisherId: "p7", publishedAt: hoursAgo(61 * 24) }),
   ],
   reads: [{ articleId: "hit", day: "2026-10-05", reads: 40 }],
   pins: [
     makePin({ articleId: "pinned", position: 0, note: "Our pick" }),
     makePin({ articleId: "fresh", position: 1, expiresAt: hoursAgo(1) }),
     makePin({ articleId: "withdrawn", position: 2 }),
+    makePin({ articleId: "stale", position: 3 }),
   ],
 };
 const recommender = (config: unknown = loadDefaultConfig()) =>
@@ -51,6 +53,11 @@ describe("feed", () => {
     expect(withdrawnPin.items.map((i) => i.articleId)).not.toContain("withdrawn");
     const readPin = await recommender().recommend(feed({ user: makeUser({ readArticleIds: ["pinned"] }) }));
     expect(readPin.items.some((i) => i.slotType === "pin")).toBe(false);
+  });
+
+  it("never shows a pin on an article older than the feed's maximum age", async () => {
+    const { items } = await recommender().recommend(feed());
+    expect(items.map((i) => i.articleId)).not.toContain("stale");
   });
 
   it("never returns a withdrawn or already read article", async () => {

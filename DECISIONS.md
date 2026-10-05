@@ -154,8 +154,9 @@ old ruling silently.
 - **Decision:** supersedes that part of work order 2.9 and amends D8. Pins still
   ignore scores, the publisher cap and the pools, but their article must pass the
   same hard filter as every candidate (D4): published, in a language the user reads,
-  not already read, not older than the feed's `maxAgeDays`. One check
-  (`articleFilter` in `src/engine/candidates.ts`) serves both.
+  not already read, not older than the feed's `maxAgeDays`. Pins and the in-memory
+  repository share one predicate (`articleFilter` in `src/engine/candidates.ts`); a
+  future SQL repository translates the same rule (D4).
 - **Alternatives considered:** checking status only.
 - **Consequences:** an editor's pin silently disappears once its article is
   withdrawn, read or ages out; seed pins point at recent articles.
@@ -174,4 +175,6 @@ old ruling silently.
      500 "Invalid time value". Fix: range-check `now` in `recommendRequestSchema`.
 - **Alternatives considered:** fixing now, which defends against a scenario that
   cannot happen on localhost.
-- **Consequences:** exposing the demo publicly requires both fixes first.
+- **Consequences:** exposing the demo publicly requires both fixes first. That
+  includes indirect exposure: a container port mapping or a reverse proxy in front
+  of the 127.0.0.1 listener counts as public.
