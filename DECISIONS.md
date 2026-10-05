@@ -123,3 +123,14 @@ old ruling silently.
   the language filter almost never exclude anything.
 - **Consequences:** language filtering and fallbacks have a visible effect in the
   demo.
+
+## 14. ESLint skips the agent tooling folders (2026-10-05)
+
+- **Context:** `.agents/` and `.claude/` are gitignored agent tooling that ships its
+  own browser and CommonJS scripts. ESLint flat config does not read `.gitignore`, so
+  `npm run lint` failed with 219 errors that were not project code.
+- **Decision:** `eslint.config.js` ignores `.agents/**` and `.claude/**`.
+- **Alternatives considered:** reading `.gitignore` via `@eslint/compat`, which adds a
+  dependency for the same result.
+- **Consequences:** removing the ignore line brings those errors back; a contributor
+  without those folders sees no difference.
