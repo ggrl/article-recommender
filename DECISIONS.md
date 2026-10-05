@@ -102,3 +102,13 @@ old ruling silently.
 - **Alternatives considered:** matching fallbacks too.
 - **Consequences:** a pin aimed at Croatian readers is not shown to a German reader
   with Croatian as a fallback.
+
+## 12. Generic reason when no criterion contributed (2026-10-05)
+
+- **Context:** every item needs at least one reason (work order 2.13), but an item
+  can score 0 on every enabled criterion, for example a recent-pool article with no
+  reads when recency is switched off.
+- **Decision:** such an item gets "Recommended for you".
+- **Alternatives considered:** naming the top criterion even at 0, which would state
+  something false ("Popular this week" with no reads).
+- **Consequences:** reasons never claim a signal that is not there.
