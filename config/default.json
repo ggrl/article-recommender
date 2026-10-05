@@ -1,0 +1,21 @@
+{
+  "version": "2026-10-proto-1",
+  "profiles": {
+    "feed": {
+      "maxAgeDays": 60,
+      "pools": { "recent": 150, "popular": 100 },
+      "weights": { "recency": 1.0, "popularity": 0.6 },
+      "recency": { "halfLifeHours": 48 },
+      "popularity": { "windowDays": 7, "normalisePerPublisher": false },
+      "diversity": { "maxPerPublisher": 3 }
+    },
+    "readNext": {
+      "maxAgeDays": 365,
+      "pools": { "similar": 100, "sameSource": 50, "popular": 30 },
+      "weights": { "similarity": 1.0, "recency": 0.3, "popularity": 0.3 },
+      "recency": { "halfLifeHours": 336 },
+      "popularity": { "windowDays": 14, "normalisePerPublisher": false },
+      "diversity": { "maxPerPublisher": 2 }
+    }
+  }
+}

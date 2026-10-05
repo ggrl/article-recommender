@@ -11,3 +11,5 @@ CLAUDE.md
 .agents/
 .claude/
 rules/
+
+node_modules/
