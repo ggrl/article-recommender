@@ -88,3 +88,34 @@ export const userContextSchema = z.strictObject({
   region: z.string().min(1).optional(), // explicit user setting, not IP-derived
 });
 export type UserContext = z.infer<typeof userContextSchema>;
+
+const limit = z.number().int().min(1).max(100);
+
+export const recommendRequestSchema = z.discriminatedUnion("mode", [
+  z.strictObject({ mode: z.literal("feed"), user: userContextSchema, limit, now: z.date() }),
+  z.strictObject({
+    mode: z.literal("readNext"),
+    user: userContextSchema,
+    anchorArticleId: z.string().min(1),
+    limit,
+    now: z.date(),
+  }),
+]);
+export type RecommendRequest = z.infer<typeof recommendRequestSchema>;
+export type Mode = RecommendRequest["mode"];
+
+export interface RecommendedItem {
+  articleId: ArticleId;
+  rank: number; // 1-based
+  finalScore: number | null; // null for pins
+  breakdown: Record<string, BreakdownEntry>;
+  sourcePools: string[];
+  slotType: "ranked" | "pin";
+  reasons: string[];
+  pinNote?: string;
+}
+
+export interface RecommendResponse {
+  items: RecommendedItem[];
+  meta: { configVersion: string; candidateCount: number; profile: Mode };
+}
