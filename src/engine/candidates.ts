@@ -1,5 +1,6 @@
 import type { Repository } from "../data/repository.ts";
 import type { FeedProfile, ReadNextProfile } from "./config.ts";
+import { interestedTopics } from "./scoring/topics.ts";
 import type { Article, ArticleId, CandidateFilter, DayRange, UserContext } from "./types.ts";
 
 const DAY_MS = 86_400_000;
@@ -38,10 +39,25 @@ export interface PoolQuery {
   run(size: number): Promise<ArticleId[]>;
 }
 
-export function feedPools(repo: Repository, filter: CandidateFilter, profile: FeedProfile, window: DayRange): PoolQuery[] {
+/** A pool the user has nothing for gets size 0, so it is skipped without a query (cold start). */
+export function feedPools(
+  repo: Repository,
+  filter: CandidateFilter,
+  profile: FeedProfile,
+  window: DayRange,
+  user: UserContext,
+): PoolQuery[] {
+  const topics = interestedTopics(user);
+  const followsSomething = user.followedPublishers.length > 0 || user.followedCommunities.length > 0;
   return [
     { name: "recent", size: profile.pools.recent, run: (n) => repo.recent(filter, n) },
     { name: "popular", size: profile.pools.popular, run: (n) => repo.popular(filter, window, n) },
+    {
+      name: "follows",
+      size: followsSomething ? profile.pools.follows : 0,
+      run: (n) => repo.follows(filter, user.followedPublishers, user.followedCommunities, n),
+    },
+    { name: "topics", size: topics.length > 0 ? profile.pools.topics : 0, run: (n) => repo.topics(filter, topics, n) },
   ];
 }
 

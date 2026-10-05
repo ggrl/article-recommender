@@ -6,13 +6,13 @@ describe("parseConfig", () => {
   it("accepts the default config", () => {
     const config = loadDefaultConfig();
     expect(config.version).toBe("2026-10-proto-1");
-    expect(config.profiles.feed.weights).toEqual({ recency: 1, popularity: 0.6 });
+    expect(config.profiles.feed.weights).toEqual({ recency: 1, popularity: 0.6, topics: 0.8, follows: 0.8 });
   });
 
   it("rejects an unknown criterion", () => {
     const raw = loadDefaultConfig();
-    Object.assign(raw.profiles.feed.weights, { topics: 0.8 });
-    expect(() => parseConfig(raw)).toThrow(/topics/);
+    Object.assign(raw.profiles.feed.weights, { location: 0.8 });
+    expect(() => parseConfig(raw)).toThrow(/location/);
   });
 
   it("rejects an unknown profile section", () => {

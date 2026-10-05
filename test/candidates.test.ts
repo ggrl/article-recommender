@@ -103,8 +103,19 @@ describe("pool definitions", () => {
 
   it("feed uses the recent and popular pools", async () => {
     const filter = buildFilter(makeUser(), 60, NOW);
-    const union = await unionPools(feedPools(repo, filter, config.profiles.feed, window));
+    const union = await unionPools(feedPools(repo, filter, config.profiles.feed, window, makeUser()));
     expect(union.get("a")).toEqual(["recent", "popular"]);
+  });
+
+  it("gives the follows and topics pools size 0 for a user with neither", () => {
+    const pools = feedPools(repo, buildFilter(makeUser(), 60, NOW), config.profiles.feed, window, makeUser());
+    expect(pools.filter((p) => p.size > 0).map((p) => p.name)).toEqual(["recent", "popular"]);
+  });
+
+  it("adds the follows and topics pools for a user with both", async () => {
+    const user = makeUser({ followedPublishers: ["p1"], topicInterests: { x: 1 } });
+    const union = await unionPools(feedPools(repo, buildFilter(user, 60, NOW), config.profiles.feed, window, user));
+    expect(union.get("a")).toEqual(["recent", "popular", "follows", "topics"]);
   });
 
   it("read next uses the similar, sameSource and popular pools", async () => {

@@ -36,14 +36,16 @@ brand new, and pins and read windows shift.
 A ranked item carries `breakdown` (score, weight and contribution per
 criterion), `sourcePools` and human-readable `reasons`. A pin item carries the
 editor's note as `reasons` and `pinNote`, `finalScore: null`, and an empty
-`breakdown` and `sourcePools`.
+`breakdown` and `sourcePools`. The `topics` and `follows` entries also carry
+`detail`: the matched topic, or `publisher` / `community`.
 
 ## Configuration
 
 `config/default.json` holds a `feed` and a `readNext` profile: maximum article age,
 pool sizes, criterion weights, recency half-life, popularity window and the
 per-publisher cap. A weight of 0 or a missing weight switches a criterion off.
-The `feed` profile accepts the weight keys `recency` and `popularity`; the
+The `feed` profile accepts the weight keys `recency`, `popularity`, `topics`
+and `follows`, and the pools `recent`, `popular`, `follows` and `topics`; the
 `readNext` profile accepts `similarity`, `recency` and `popularity`. Any other
 weight key is a startup error, and an invalid config stops the server at
 startup.
@@ -51,7 +53,8 @@ startup.
 ## Adding a criterion
 
 1. Create `src/engine/scoring/<name>.ts` exporting a `Criterion`: an `id` and
-   `score(candidates, ctx)` returning a score in [0, 1] per article.
+   `score(candidates, ctx)` returning a score in [0, 1] per article. A score
+   may be `{ score, detail }` when the reason needs to name what matched.
 2. Register it in `criteria` in `src/engine/scoring/index.ts`.
 3. Add its weight key to the profile schema in `src/engine/config.ts`.
 4. Add its weight to `config/default.json` to switch it on.
@@ -60,7 +63,8 @@ startup.
 
 ## Known limitations
 
-- Phase 1 only: no topics, follows, quotas, exploration or surprise slots yet.
+- No quotas, exploration or surprise slots yet (phase 2b, `DECISIONS.md` entry 18).
+- Follow reasons do not name the publisher or community (entry 21).
 - Similarity is topic-tag overlap; embeddings come later.
 - In-memory storage only; the seed data is regenerated at every start.
 - The demo is for local use only: it listens on 127.0.0.1, and request lists

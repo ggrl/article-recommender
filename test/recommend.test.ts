@@ -36,7 +36,7 @@ describe("feed", () => {
     const { items, meta } = await recommender().recommend(feed());
     expect(items.map((i) => i.rank)).toEqual(items.map((_, i) => i + 1));
     for (const item of items.filter((i) => i.slotType === "ranked")) {
-      expect(Object.keys(item.breakdown)).toEqual(["recency", "popularity"]);
+      expect(Object.keys(item.breakdown)).toEqual(["recency", "popularity", "topics", "follows"]);
       expect(item.reasons.length).toBeGreaterThan(0);
     }
     expect(meta).toEqual({ configVersion: "2026-10-proto-1", candidateCount: 5, profile: "feed" });
@@ -119,5 +119,42 @@ describe("request validation", () => {
 
   it("rejects an invalid date", async () => {
     await expect(recommender().recommend(feed({ now: new Date("not a date") }))).rejects.toThrow(RequestError);
+  });
+});
+
+describe("personalised feed", () => {
+  const repository = createMemoryRepository({
+    articles: [
+      makeArticle({ id: "followed", publisherId: "p9", publishedAt: hoursAgo(10) }),
+      makeArticle({ id: "garden", publisherId: "p10", publishedAt: hoursAgo(10), topics: ["gardening"] }),
+      makeArticle({ id: "other", publisherId: "p11", publishedAt: hoursAgo(10) }),
+    ],
+    reads: [],
+    pins: [],
+  });
+  const user = makeUser({ followedPublishers: ["p9"], topicInterests: { gardening: 1 } });
+  const personal = (config: unknown = loadDefaultConfig()) => createRecommender({ repository, config });
+
+  it("ranks followed and interesting articles above an unrelated one of the same age", async () => {
+    const { items } = await personal().recommend(feed({ user }));
+    expect(items.map((i) => i.articleId)).toEqual(["followed", "garden", "other"]);
+  });
+
+  it("explains a follow and a topic match", async () => {
+    const { items } = await personal().recommend(feed({ user }));
+    const reasons = (id: string) => items.find((i) => i.articleId === id)?.reasons;
+    expect(reasons("followed")).toContain("From a publisher you follow");
+    expect(reasons("garden")).toContain("Matches your interest in gardening");
+  });
+
+  it("drops topics and follows from scores and reasons when their weights are 0", async () => {
+    const config = loadDefaultConfig();
+    config.profiles.feed.weights.topics = 0;
+    config.profiles.feed.weights.follows = 0;
+    const { items } = await personal(config).recommend(feed({ user }));
+    for (const item of items) {
+      expect(Object.keys(item.breakdown)).toEqual(["recency", "popularity"]);
+      expect(item.reasons.join()).not.toMatch(/interest|follow/);
+    }
   });
 });

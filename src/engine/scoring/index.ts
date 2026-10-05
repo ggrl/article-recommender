@@ -1,9 +1,11 @@
 import type { BreakdownEntry, Candidate, Criterion, ScoredCandidate, ScoringContext } from "../types.ts";
+import { follows } from "./follows.ts";
 import { popularity } from "./popularity.ts";
 import { recency } from "./recency.ts";
 import { similarity } from "./similarity.ts";
+import { topics } from "./topics.ts";
 
-export const criteria: Criterion[] = [recency, popularity, similarity];
+export const criteria: Criterion[] = [recency, popularity, similarity, topics, follows];
 
 /** Final score = sum(weight * score) / sum(weight) over criteria with weight above 0. */
 export function scoreCandidates(

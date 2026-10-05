@@ -3,8 +3,8 @@
   "profiles": {
     "feed": {
       "maxAgeDays": 60,
-      "pools": { "recent": 150, "popular": 100 },
-      "weights": { "recency": 1.0, "popularity": 0.6 },
+      "pools": { "recent": 150, "popular": 100, "follows": 100, "topics": 100 },
+      "weights": { "recency": 1.0, "popularity": 0.6, "topics": 0.8, "follows": 0.8 },
       "recency": { "halfLifeHours": 48 },
       "popularity": { "windowDays": 7, "normalisePerPublisher": false },
       "diversity": { "maxPerPublisher": 3 }

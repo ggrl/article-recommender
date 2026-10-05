@@ -52,7 +52,7 @@ export function createRecommender(deps: { repository: Repository; config: unknow
       let pinsLoaded: Promise<Map<number, EditorPin>> = Promise.resolve(new Map()); // pins are feed only (D3)
       if (request.mode === "feed") {
         const filter = buildFilter(user, profile.maxAgeDays, now);
-        pools = feedPools(repo, filter, config.profiles.feed, window);
+        pools = feedPools(repo, filter, config.profiles.feed, window, user);
         pinsLoaded = loadPins(request, filter);
       } else {
         [anchor] = await repo.getArticles([request.anchorArticleId]);

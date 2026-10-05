@@ -16,8 +16,10 @@ const allOff = "at least one weight must be above 0";
 
 const feedProfileSchema = z.strictObject({
   maxAgeDays: z.number().int().positive(),
-  pools: z.strictObject({ recent: poolSize, popular: poolSize }),
-  weights: z.strictObject({ recency: weight, popularity: weight }).refine(someWeightOn, allOff),
+  pools: z.strictObject({ recent: poolSize, popular: poolSize, follows: poolSize, topics: poolSize }),
+  weights: z
+    .strictObject({ recency: weight, popularity: weight, topics: weight, follows: weight })
+    .refine(someWeightOn, allOff),
   recency,
   popularity,
   diversity,

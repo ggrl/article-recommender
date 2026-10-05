@@ -33,8 +33,8 @@ describe("scoreCandidates", () => {
     expect(Object.keys(scored?.breakdown ?? {})).toEqual(["one"]);
   });
 
-  it("registers the phase 1 criteria", () => {
-    expect(criteria.map((c) => c.id)).toEqual(["recency", "popularity", "similarity"]);
+  it("registers every criterion", () => {
+    expect(criteria.map((c) => c.id)).toEqual(["recency", "popularity", "similarity", "topics", "follows"]);
   });
 
   it("copies a criterion's detail into the breakdown", () => {
