@@ -239,3 +239,18 @@ old ruling silently.
   same `.max()` fix covers them; `topicInterests` is a `z.record` with no `.max()`,
   so it needs a refine on its key count instead.
 - **Consequences:** none until the demo is exposed (D17).
+
+## 24. Default weights let personal matches outrank freshness (2026-10-06)
+
+- **Context:** with the work order's weights (recency 1, popularity 0.6, topics 0.8,
+  follows 0.8), an article matching a full-strength topic and a follow scores at
+  least 1.6 / 3.2, the same as the best possible unmatched article (brand new, most
+  read). Matched articles therefore outrank fresh unmatched ones at almost any age
+  inside `maxAgeDays`. Seen in the demo: an article about 18 days old ranked 3rd for
+  a user interested in climate.
+- **Decision:** accept it for now. The weights are configuration and get tuned
+  later; results do not need to be perfect in the prototype.
+- **Alternatives considered:** lower topics and follows weights; a shorter age limit
+  for the follows and topics pools.
+- **Consequences:** raise with the client together with the quota question (D18).
+  Tuning means editing `config/default.json`, not code.
