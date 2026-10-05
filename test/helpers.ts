@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { parseConfig, type Config } from "../src/engine/config.ts";
-import type { Article, ScoringContext, UserContext } from "../src/engine/types.ts";
+import type { Article, EditorPin, ScoringContext, UserContext } from "../src/engine/types.ts";
 
 export function loadDefaultConfig(): Config {
   return parseConfig(JSON.parse(readFileSync(new URL("../config/default.json", import.meta.url), "utf8")));
@@ -40,6 +40,16 @@ export function makeUser(overrides: Partial<UserContext> = {}): UserContext {
     followedCommunities: [],
     followedPublishers: [],
     readArticleIds: [],
+    ...overrides,
+  };
+}
+
+export function makePin(overrides: Partial<EditorPin> & { articleId: string }): EditorPin {
+  return {
+    note: "Editor's pick",
+    position: 0,
+    startsAt: hoursAgo(24),
+    expiresAt: new Date(NOW.getTime() + DAY_MS),
     ...overrides,
   };
 }

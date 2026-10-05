@@ -92,3 +92,13 @@ old ruling silently.
 - **Alternatives considered:** padding with zero-read articles.
 - **Consequences:** "popular" in `sourcePools` always means read at least once; the
   recent pool still covers cold start.
+
+## 11. Pin language targeting matches the main language (2026-10-05)
+
+- **Context:** `EditorPin.languages` targets languages, but a user has a main
+  language and fallbacks.
+- **Decision:** a language-targeted pin matches only the user's main language.
+  Availability of the pinned article still accepts fallbacks.
+- **Alternatives considered:** matching fallbacks too.
+- **Consequences:** a pin aimed at Croatian readers is not shown to a German reader
+  with Croatian as a fallback.
