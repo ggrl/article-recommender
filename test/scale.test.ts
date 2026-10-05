@@ -7,7 +7,9 @@ import { NOW, loadDefaultConfig } from "./helpers.ts";
 const data = generateSeed(42, NOW);
 const recommender = createRecommender({ repository: createMemoryRepository(data), config: loadDefaultConfig() });
 const [coldStart] = data.users;
+const seeded = data.users[1];
 const feed = { mode: "feed", user: coldStart, limit: 20, now: NOW };
+const seededFeed = { mode: "feed", user: seeded, limit: 20, now: NOW };
 
 describe("on seed data", () => {
   it("gives the cold-start user a full-length feed", async () => {
@@ -21,6 +23,10 @@ describe("on seed data", () => {
 
   it("returns identical output for an identical request", async () => {
     expect(await recommender.recommend(feed)).toEqual(await recommender.recommend(feed));
+  });
+
+  it("returns identical output for an identical request, seeded user", async () => {
+    expect(await recommender.recommend(seededFeed)).toEqual(await recommender.recommend(seededFeed));
   });
 
   it("never repeats an article for any sample user", async () => {
@@ -47,6 +53,18 @@ describe("on seed data", () => {
     for (let i = 0; i < 5; i++) {
       const start = performance.now();
       await recommender.recommend(feed);
+      times.push(performance.now() - start);
+    }
+    const median = times.sort((a, b) => a - b)[2];
+    expect(median).toBeLessThan(100);
+  });
+
+  it("serves a feed over 2,000 articles in under 100 ms, seeded user", async () => {
+    await recommender.recommend(seededFeed); // warm-up, so start-up cost is not measured
+    const times: number[] = [];
+    for (let i = 0; i < 5; i++) {
+      const start = performance.now();
+      await recommender.recommend(seededFeed);
       times.push(performance.now() - start);
     }
     const median = times.sort((a, b) => a - b)[2];
