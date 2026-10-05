@@ -33,3 +33,20 @@ export interface Criterion {
   id: string;
   score(candidates: Article[], ctx: ScoringContext): Map<ArticleId, number>;
 }
+
+export interface Candidate {
+  article: Article;
+  /** Every pool that returned this article. */
+  sourcePools: string[];
+}
+
+export interface BreakdownEntry {
+  score: number;
+  weight: number;
+  contribution: number;
+}
+
+export interface ScoredCandidate extends Candidate {
+  finalScore: number;
+  breakdown: Record<string, BreakdownEntry>;
+}
