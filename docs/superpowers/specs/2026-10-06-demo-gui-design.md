@@ -78,15 +78,18 @@ Routes:
   1. The body passes a strict schema that checks only its outer shape: `reader` is
      an integer index into `users`, `seed` is passed through, `weights` and
      `quotas` are any value. Failure: 400 with the validation message.
-  2. A deep copy of `rawConfig` gets `profiles.feed.weights = weights` and
-     `profiles.feed.quotas = quotas`.
+  2. A copy of the default config with the feed profile's `weights` and `quotas`
+     replaced by the posted ones; the default itself is never changed.
   3. `parseConfig` checks the result: ranges, unknown keys, at least one weight on,
      shares at most 1. Failure: 400 with its message. The value rules therefore stay
      in `src/engine/config.ts` only.
   4. `createRecommender({ repository, config })` builds an engine for this request.
   5. `recommend({ mode: "feed", user: users[reader], limit: 20, now: now(), seed })`.
      A `RequestError` (for example a bad seed) becomes 400.
-  6. The engine's response is returned unchanged.
+  6. The engine's response is returned unchanged, plus one extra field the page
+     needs because items carry only article IDs: `articles`, keyed by the returned
+     article IDs, each `{ publisherId, topics, ageHours }`, with `ageHours` counted
+     from the same `now` the engine used and rounded to whole hours.
 
 `src/http/main.ts` already reads the config and generates the seed data; it also
 derives the topic list from the seed articles and calls `registerDemo`.
@@ -108,8 +111,9 @@ way `main.ts` builds it, seed data from `generateSeed(42, NOW)` and `now` fixed 
 - `GET /demo/options`: five readers, the first labelled "Anonymous (cold start)";
   topics sorted and unique; defaults equal the feed weights and quotas of the
   default config.
-- `POST /demo/feed` with the default weights and quotas and seed 7 returns exactly
-  what `POST /recommend` returns for the same reader, `now` and seed.
+- `POST /demo/feed` with the default weights and quotas and seed 7 returns, apart
+  from `articles`, exactly what `POST /recommend` returns for the same reader, `now`
+  and seed; `articles` has one entry per returned item.
 - Popularity weight 0: no item's breakdown has `popularity`.
 - Quotas enabled with surprise 0.2: at least one item has `slotType` `surprise`
   (cold-start reader).
