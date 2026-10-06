@@ -21,9 +21,11 @@ npm start        # demo on http://127.0.0.1:3000 (PORT to change)
 ## Demo endpoints
 
 - `GET /health`
-- `POST /recommend` with `{ mode, user, limit, now?, anchorArticleId? }`.
+- `POST /recommend` with `{ mode, user, limit, now?, anchorArticleId?, seed? }`.
   `mode` is `feed` or `readNext`; `readNext` needs `anchorArticleId`. `now` is an
-  ISO date and defaults to the server clock. `limit` is 1 to 100.
+  ISO date and defaults to the server clock. `limit` is 1 to 100. `seed` is an
+  integer from 0 to 4294967295; without one the engine draws one. `meta.seed` in
+  the response is the seed used, so sending it back reproduces the response.
 
 ```bash
 curl -s -X POST http://127.0.0.1:3000/recommend -H 'content-type: application/json' \
@@ -34,12 +36,15 @@ The demo generates its seed data against the server clock at start-up, so a `now
 far from start-up time gives odd results: articles dated after `now` count as
 brand new, and pins and read windows shift.
 
-A ranked item carries `breakdown` (score, weight and contribution per
-criterion), `sourcePools` and human-readable `reasons`. A pin item carries the
-editor's note as `reasons` and `pinNote`, `finalScore: null`, and an empty
-`breakdown` and `sourcePools`. The `topics` and `follows` entries also carry
-`detail` when they matched: for `topics` it is the strongest matched topic, for
-`follows` it is `publisher` or `community`.
+Every item has a `slotType`: `ranked`, `quota`, `surprise` or `pin`. A scored
+item (all but pins) carries `breakdown` (score, weight and contribution per
+criterion), `sourcePools` and human-readable `reasons`. A surprise item's only
+reason is "Something outside your usual topics"; a featured-topic quota item's
+first reason is "Featured topic: {topic}". A pin item carries the editor's note
+as `reasons` and `pinNote`, `finalScore: null`, and an empty `breakdown` and
+`sourcePools`. The `topics` and `follows` entries also carry `detail` when they
+matched: for `topics` it is the strongest matched topic, for `follows` it is
+`publisher` or `community`.
 
 ## Configuration
 
@@ -47,10 +52,26 @@ editor's note as `reasons` and `pinNote`, `finalScore: null`, and an empty
 pool sizes, criterion weights, recency half-life, popularity window and the
 per-publisher cap. A weight of 0 or a missing weight switches a criterion off.
 The `feed` profile accepts the weight keys `recency`, `popularity`, `topics`
-and `follows`, and the pools `recent`, `popular`, `follows` and `topics`; the
-`readNext` profile accepts `similarity`, `recency` and `popularity`. Any other
-weight key is a startup error, and an invalid config stops the server at
-startup.
+and `follows`, and the pools `recent`, `popular`, `follows`, `topics` and
+`exploration`; the `readNext` profile accepts `similarity`, `recency` and
+`popularity`. Any other weight key is a startup error, and an invalid config
+stops the server at startup.
+
+The `feed` profile's `quotas` block reserves shares of the feed (`DECISIONS.md`
+entries 25 to 30). It is off by default:
+
+- `enabled`: switches all quotas on or off.
+- `topics`: featured topics set by editors, topic name to share, for example
+  `{ "climate": 0.1 }`, whatever the user's interests.
+- `follows.publishers`, `follows.communities`: shares for followed publishers
+  and communities.
+- `surprise`: the share for articles matching none of the user's topics or
+  follows, sampled from the `exploration` pool. That pool is only queried when
+  quotas are on and `surprise` is above 0.
+
+Shares are fractions of the slots left after pins and may add up to 1 at most.
+Reserved items keep their place by score, so low-scoring ones end up near the
+end of the list.
 
 ## Adding a criterion
 
@@ -65,7 +86,8 @@ startup.
 
 ## Known limitations
 
-- No quotas, exploration or surprise slots yet (phase 2b, `DECISIONS.md` entry 18).
+- Reserved quota and surprise items are not moved up, so they mostly sit at the
+  end of the feed (`DECISIONS.md` entry 28).
 - Follow reasons do not name the publisher or community (entry 21).
 - Similarity is topic-tag overlap; embeddings come later.
 - In-memory storage only; the seed data is regenerated at every start.
