@@ -3,11 +3,12 @@
   "profiles": {
     "feed": {
       "maxAgeDays": 60,
-      "pools": { "recent": 150, "popular": 100, "follows": 100, "topics": 100 },
+      "pools": { "recent": 150, "popular": 100, "follows": 100, "topics": 100, "exploration": 60 },
       "weights": { "recency": 1.0, "popularity": 0.6, "topics": 0.8, "follows": 0.8 },
       "recency": { "halfLifeHours": 48 },
       "popularity": { "windowDays": 7, "normalisePerPublisher": false },
-      "diversity": { "maxPerPublisher": 3 }
+      "diversity": { "maxPerPublisher": 3 },
+      "quotas": { "enabled": false, "topics": {}, "follows": { "communities": 0.4, "publishers": 0.4 }, "surprise": 0.2 }
     },
     "readNext": {
       "maxAgeDays": 365,
