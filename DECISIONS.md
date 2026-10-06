@@ -345,3 +345,17 @@ old ruling silently.
 - **Consequences:** the demo routes let any caller choose the engine's config. They
   fall under D17: never exposed beyond 127.0.0.1 without input limits first, and a
   request's featured-topic map has no size limit until then.
+
+## 32. No Host-header check on the demo server, for now (2026-10-06)
+
+- **Context:** the security pass on the demo page noted that Fastify does not check
+  the `Host` header, so a malicious website using DNS rebinding could read responses
+  from the server on 127.0.0.1. Cross-site POSTs are already refused: `text/plain`
+  gives 400, form-encoded gives 415, and the CORS preflight is not answered (tested
+  by request).
+- **Decision:** no Host allowlist. Only synthetic seed data and computed feeds are
+  readable, the same exposure `POST /recommend` already had.
+- **Alternatives considered:** an allowlist of `127.0.0.1` and `localhost` hosts in
+  `buildServer`.
+- **Consequences:** add the allowlist before the demo serves anything that is not
+  synthetic, or when D17's fixes are made for exposure.

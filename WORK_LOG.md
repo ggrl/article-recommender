@@ -1,5 +1,47 @@
 # Work log
 
+## 2026-10-06 (late) - Diagram and feed workbench page
+
+- **What changed:** two additions outside the work order. (1) `docs/how-it-works.md`:
+  a plain-language Mermaid flowchart of the engine (feed and read next, 9 boxes, no
+  file names), linked from the README; a polished version is a private claude.ai
+  page, https://claude.ai/artifact/Xn8Nby7FiWBF74dYsME5oN (not in the repo; update
+  it by hand when the doc changes). (2) The feed workbench: `npm start`, then
+  `http://127.0.0.1:3000/`. `src/http/demo.ts` adds `GET /`, `GET /demo/options` and
+  `POST /demo/feed` (posted feed weights and quotas laid over `config/default.json`,
+  checked by `parseConfig`, one engine per request, response plus an `articles` map);
+  `src/http/demo.html` is the page (plain JS, `textContent` only, no external
+  resources). `main.ts` wires it. The engine did not change. Spec
+  `docs/superpowers/specs/2026-10-06-demo-gui-design.md`, plan
+  `docs/superpowers/plans/2026-10-06-demo-gui.md`, rulings D31 and D32.
+- **Why:** the user wanted a picture of how the engine works and a simple page that
+  shows it working with chosen weights and quotas. Local only (D31).
+- **Verified:** `npm run verify` green on main after the merge and again at this
+  save: 17 files, 195 tests, type check and lint clean. `test/demo.test.ts` proves
+  the demo feed equals `POST /recommend` for the same reader, seed and now. The page
+  was driven in headless Chrome over the DevTools protocol (the Chrome extension was
+  not connected): initial feed with pins at ranks 1 and 4, weight 0, reader change,
+  quotas on, shares over 1 (error shown, last feed kept), reset, quota inputs locked
+  while off; no console errors. Task reviews clean; first-look UX review led to one
+  fix wave; final review "ready to merge" plus one fix wave, both re-reviewed;
+  security review SHIP (cross-site POSTs checked by real requests). Merged and pushed
+  (`origin/main` at `58a4788`).
+- **Not verified:** the Mermaid diagram has not been seen rendered (no local
+  renderer; check it on GitHub). Nobody has used the page in a real, visible browser
+  window. The security pass ran before the last fix commit, which changed only error
+  wording and the pin sentence.
+- **Parked on purpose:** no "updating" label during a refresh; pin rows show
+  "pinned" with the note as the reason (spec says so); a negative topic share is
+  ignored; Reset keeps reader and seed; hand-made bad requests (bad reader, unknown
+  key) still get raw validation text; no Host check (D32).
+- **Still open from before:** follow-quota items carry no follow reason when the
+  follows weight is 0; client questions on quotas, surprise and weights (D24, D28).
+- **Next step:** open the page and the GitHub diagram yourself; then tune weights
+  with the workbench against the seed readers (D24), or wait for the client.
+- **Surprises:** the UX review caught that the default quota shares already add up
+  to 1, so any featured topic tipped the total over. The last fix commit carries a
+  "Claude Sonnet 5" co-author line because that model wrote it.
+
 ## 2026-10-06 (later) - Phase 2b: quotas, exploration, surprise
 
 - **What changed:** the request accepts an optional `seed`; without one the engine
