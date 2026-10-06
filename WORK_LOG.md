@@ -1,5 +1,46 @@
 # Work log
 
+## 2026-10-06 (later) - Phase 2b: quotas, exploration, surprise
+
+- **What changed:** the request accepts an optional `seed`; without one the engine
+  draws one, and every response returns it as `meta.seed` (D26, supersedes D9).
+  `createRng` moved to `src/engine/rng.ts` (plus `randomSeed`, `sample`). New
+  repository query `unmatched` (`src/data/repository.ts`, `memoryRepository.ts`)
+  feeds the `exploration` pool in `feedPools` (`src/engine/candidates.ts`), sampled
+  with the seed, queried only when quotas are on and `surprise` > 0 (D29). Quota
+  assembly in new `src/engine/assembly/quotas.ts`; `diversity.ts` now has one
+  shared `publisherCap` counter for reservation and fill. Config gains
+  `pools.exploration` and a `quotas` block (`src/engine/config.ts`,
+  `activeQuotas`), off in `config/default.json`. `slotType` is now
+  `ranked | quota | surprise | pin`; new reasons in `explain.ts` (`slotReasons`).
+  README updated. Design `docs/superpowers/specs/2026-10-06-phase-2b-design.md`,
+  plan `docs/superpowers/plans/2026-10-06-phase-2b.md`, rulings D25 to D30.
+- **Why:** rest of work order phase 2. The client still has not answered what a
+  quota means; we built the work order's guaranteed share (D25), off by default, so
+  nothing changes until someone switches it on. `quotas.topics` keys are editor-set
+  featured topics (D27). Reserved items keep their place by score (D28).
+- **Verified:** `npm run verify` green on main after the merge and again at this
+  save: 16 files, 185 tests, type check and lint clean. Six subagent tasks, each with
+  a task review (all clean); whole-branch review "ready to merge" plus one small fix
+  wave (featured-topic order test, README sentence), re-reviewed; security review
+  SHIP. The seed-data surprise test and the featured-topic order test were each
+  proven able to fail by mutation. Fast-forward merged to main locally
+  (`ab4bac8..60a7c41`).
+- **Not verified:** nobody started the demo server and made a live request with
+  quotas on; that path is covered only by the end-to-end and seed-data tests.
+  **Not pushed:** local main is ahead of `origin/main`.
+- **Open, for the user:** with the `follows` weight at 0, follow-quota items carry
+  no follow reason (spec says they keep the usual reasons; left as is). Possible fix:
+  a leading follow reason like featured topics have.
+- **Open, for the client** (with D24): a featured-topic share fills only from
+  candidates the pools found, so a niche topic can come up short; surprise items
+  mostly sit at the end of the feed (D28).
+- **Known and accepted:** echoed random seeds expose some `Math.random` output;
+  harmless unless `Math.random` is later used for tokens or IDs. With quotas on, a
+  huge follow list costs one more article scan (D23).
+- **Next step:** push main; then either tune weights against seed users (D24) or
+  wait for the client's answers on quotas and surprise.
+
 ## 2026-10-06 - Phase 2a: topics and follows
 
 - **What changed:** the feed is personalised. New criteria `src/engine/scoring/topics.ts`
