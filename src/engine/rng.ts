@@ -17,3 +17,14 @@ export const MAX_SEED = 0xffff_ffff;
 export function randomSeed(): number {
   return Math.floor(Math.random() * (MAX_SEED + 1));
 }
+
+/** Up to n items without replacement (partial Fisher-Yates); the input is not changed. */
+export function sample<T>(items: readonly T[], n: number, rng: () => number): T[] {
+  const pool = [...items];
+  const count = Math.min(n, pool.length);
+  for (let i = 0; i < count; i++) {
+    const j = i + Math.floor(rng() * (pool.length - i));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, count);
+}

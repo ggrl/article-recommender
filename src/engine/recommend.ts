@@ -5,7 +5,7 @@ import { activePins, placePins } from "./assembly/pins.ts";
 import { buildFilter, feedPools, readNextPools, unionPools, type PoolQuery } from "./candidates.ts";
 import { parseConfig } from "./config.ts";
 import { reasonsFor } from "./explain.ts";
-import { randomSeed } from "./rng.ts";
+import { createRng, randomSeed } from "./rng.ts";
 import { scoreCandidates } from "./scoring/index.ts";
 import { popularityWindow } from "./scoring/popularity.ts";
 import {
@@ -54,7 +54,7 @@ export function createRecommender(deps: { repository: Repository; config: unknow
       let pinsLoaded: Promise<Map<number, EditorPin>> = Promise.resolve(new Map()); // pins are feed only (D3)
       if (request.mode === "feed") {
         const filter = buildFilter(user, profile.maxAgeDays, now);
-        pools = feedPools(repo, filter, config.profiles.feed, window, user);
+        pools = feedPools(repo, filter, config.profiles.feed, window, user, createRng(seed));
         pinsLoaded = loadPins(request, filter);
       } else {
         [anchor] = await repo.getArticles([request.anchorArticleId]);

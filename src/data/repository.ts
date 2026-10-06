@@ -14,6 +14,14 @@ export interface Repository {
   follows(filter: CandidateFilter, publishers: string[], communities: string[], limit: number): Promise<ArticleId[]>;
   /** At least one of the given topics; newest first. */
   topics(filter: CandidateFilter, topics: string[], limit: number): Promise<ArticleId[]>;
+  /** No topic in `topics`, not from a publisher in `publishers`, no community in `communities`; newest first. */
+  unmatched(
+    filter: CandidateFilter,
+    topics: string[],
+    publishers: string[],
+    communities: string[],
+    limit: number,
+  ): Promise<ArticleId[]>;
   /** Known IDs only, in the order asked. */
   getArticles(ids: ArticleId[]): Promise<Article[]>;
   /** Total reads per article within the window; articles without reads are absent. */

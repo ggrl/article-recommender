@@ -108,6 +108,30 @@ describe("follows and topics", () => {
   });
 });
 
+describe("unmatched", () => {
+  const repo = createMemoryRepository({
+    articles: [
+      makeArticle({ id: "topic", publisherId: "p2", topics: ["climate"], publishedAt: hoursAgo(1) }),
+      makeArticle({ id: "publisher", publisherId: "p1", publishedAt: hoursAgo(2) }),
+      makeArticle({ id: "community", publisherId: "p2", communityIds: ["c1"], publishedAt: hoursAgo(3) }),
+      makeArticle({ id: "newer", publisherId: "p3", publishedAt: hoursAgo(4) }),
+      makeArticle({ id: "older", publisherId: "p2", topics: ["sport"], publishedAt: hoursAgo(5) }),
+      makeArticle({ id: "withdrawn", publisherId: "p3", status: "withdrawn", publishedAt: hoursAgo(1) }),
+    ],
+    reads: [],
+    pins: [],
+  });
+
+  it("leaves out topic, publisher and community matches, newest first, filtered before the limit", async () => {
+    expect(await repo.unmatched(filter(), ["climate"], ["p1"], ["c1"], 10)).toEqual(["newer", "older"]);
+    expect(await repo.unmatched(filter(), ["climate"], ["p1"], ["c1"], 1)).toEqual(["newer"]);
+  });
+
+  it("returns every article passing the filter when nothing is matched against", async () => {
+    expect(await repo.unmatched(filter(), [], [], [], 10)).toEqual(["topic", "publisher", "community", "newer", "older"]);
+  });
+});
+
 describe("loads", () => {
   const repo = createMemoryRepository({
     articles: [makeArticle({ id: "a" }), makeArticle({ id: "b" })],

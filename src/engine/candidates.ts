@@ -1,5 +1,6 @@
 import type { Repository } from "../data/repository.ts";
-import type { FeedProfile, ReadNextProfile } from "./config.ts";
+import { activeQuotas, type FeedProfile, type ReadNextProfile } from "./config.ts";
+import { sample } from "./rng.ts";
 import { interestedTopics } from "./scoring/topics.ts";
 import type { Article, ArticleId, CandidateFilter, DayRange, UserContext } from "./types.ts";
 
@@ -39,16 +40,21 @@ export interface PoolQuery {
   run(size: number): Promise<ArticleId[]>;
 }
 
-/** A pool the user has nothing for gets size 0, so it is skipped without a query (cold start). */
+/**
+ * A pool the user has nothing for gets size 0, so it is skipped without a query (cold start).
+ * Exploration runs only with surprise slots (D29): it samples from the newest `pools.recent` unmatched articles.
+ */
 export function feedPools(
   repo: Repository,
   filter: CandidateFilter,
   profile: FeedProfile,
   window: DayRange,
   user: UserContext,
+  rng: () => number,
 ): PoolQuery[] {
   const topics = interestedTopics(user);
   const followsSomething = user.followedPublishers.length > 0 || user.followedCommunities.length > 0;
+  const surpriseOn = (activeQuotas(profile)?.surprise ?? 0) > 0;
   return [
     { name: "recent", size: profile.pools.recent, run: (n) => repo.recent(filter, n) },
     { name: "popular", size: profile.pools.popular, run: (n) => repo.popular(filter, window, n) },
@@ -58,6 +64,16 @@ export function feedPools(
       run: (n) => repo.follows(filter, user.followedPublishers, user.followedCommunities, n),
     },
     { name: "topics", size: topics.length > 0 ? profile.pools.topics : 0, run: (n) => repo.topics(filter, topics, n) },
+    {
+      name: "exploration",
+      size: surpriseOn ? profile.pools.exploration : 0,
+      run: async (n) =>
+        sample(
+          await repo.unmatched(filter, topics, user.followedPublishers, user.followedCommunities, profile.pools.recent),
+          n,
+          rng,
+        ),
+    },
   ];
 }
 

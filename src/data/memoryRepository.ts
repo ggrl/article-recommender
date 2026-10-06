@@ -60,6 +60,13 @@ export function createMemoryRepository(data: MemoryData): Repository {
       const ok = articleFilter(filter);
       return firstIds(data.articles.filter((a) => ok(a) && a.topics.some((t) => wanted.has(t))).sort(newestFirst), limit);
     },
+    async unmatched(filter, topics, publishers, communities, limit) {
+      const excluded = new Set(topics);
+      const ok = articleFilter(filter);
+      const matches = (a: Article) =>
+        a.topics.some((t) => excluded.has(t)) || followMatch(a, publishers, communities) !== undefined;
+      return firstIds(data.articles.filter((a) => ok(a) && !matches(a)).sort(newestFirst), limit);
+    },
     async getArticles(ids) {
       return ids.flatMap((id) => byId.get(id) ?? []);
     },
