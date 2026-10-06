@@ -128,6 +128,7 @@ Test first, as before.
 - explain: the two new reason texts; surprise items carry only the surprise reason.
 - end to end: `meta.seed` echoed; a sent seed gives an identical response twice;
   no seed still gives a valid response; with quotas on, surprise and quota items
-  carry their `slotType` and reasons; the existing tests pass unchanged on the
-  default config.
+  carry their `slotType` and reasons; the existing tests pass on the default
+  config, except that tests comparing two whole responses send a seed, since
+  `meta.seed` differs otherwise.
 - scale: seeded users with quotas enabled; the 100 ms smoke test still passes.
