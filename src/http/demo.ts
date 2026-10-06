@@ -24,6 +24,16 @@ export function topicsOf(articles: Article[]): string[] {
   return [...new Set(articles.flatMap((a) => a.topics))].sort(compareIds);
 }
 
+/** Strips parseConfig's "Invalid config:" header and zod's "→ at ..." path lines, leaving plain issue text. */
+export function plainConfigError(message: string): string {
+  const lines = message.split("\n").map((line) => line.trim());
+  if (lines[0] === "Invalid config:") lines.shift();
+  return lines
+    .filter((line) => !line.startsWith("→"))
+    .map((line) => (line.startsWith("✖ ") ? line.slice(2) : line))
+    .join("; ");
+}
+
 /** Local-only demo routes (D31): the page, its options, and a feed built from posted weights and quotas. */
 export function registerDemo(app: FastifyInstance, deps: DemoDeps): void {
   const page = readFileSync(new URL("./demo.html", import.meta.url), "utf8");
@@ -53,7 +63,8 @@ export function registerDemo(app: FastifyInstance, deps: DemoDeps): void {
     try {
       config = parseConfig({ ...base, profiles: { ...base.profiles, feed: { ...base.profiles.feed, weights, quotas } } });
     } catch (error) {
-      return reply.code(400).send({ error: error instanceof Error ? error.message : String(error) });
+      const message = error instanceof Error ? error.message : String(error);
+      return reply.code(400).send({ error: plainConfigError(message) });
     }
 
     const now = deps.now();

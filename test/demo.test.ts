@@ -87,10 +87,12 @@ describe("demo feed", () => {
     const tooMuch = await demoFeed({ reader: 0, weights: defaults.weights, quotas: overbooked });
     expect(tooMuch.statusCode).toBe(400);
     expect(tooMuch.json().error).toMatch(/more than 1/);
+    expect(tooMuch.json().error).toBe("quota shares may not add up to more than 1");
 
     const allOff = await demoFeed({ reader: 0, weights: { recency: 0, popularity: 0, topics: 0, follows: 0 }, quotas: defaults.quotas });
     expect(allOff.statusCode).toBe(400);
     expect(allOff.json().error).toMatch(/at least one weight/);
+    expect(allOff.json().error).toBe("at least one weight must be above 0");
 
     const unknownWeight = await demoFeed({ reader: 0, weights: { ...defaults.weights, location: 1 }, quotas: defaults.quotas });
     expect(unknownWeight.statusCode).toBe(400);

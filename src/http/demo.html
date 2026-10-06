@@ -90,6 +90,13 @@
   }
   select { width: 100%; }
   .summary { margin: 0; font-size: 0.85rem; color: var(--muted); }
+  legend.topics-legend {
+    font: 400 0.85rem/1.2 var(--sans);
+    letter-spacing: normal;
+    text-transform: none;
+    margin: 0;
+    color: var(--muted);
+  }
   .slider { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; align-items: center; }
   .slider input[type="range"] { grid-column: 1 / -1; width: 100%; accent-color: var(--accent); }
   output { font: 0.85rem var(--mono); font-variant-numeric: tabular-nums; color: var(--muted); }
@@ -100,7 +107,8 @@
   .topic input { width: 4.8em; padding: 4px 6px; }
   .total { margin: 0; font: 0.85rem var(--mono); font-variant-numeric: tabular-nums; color: var(--muted); }
   .total.over { color: var(--danger); font-weight: 600; }
-  .quota-fields[aria-disabled="true"] { opacity: 0.55; }
+  .quota-fields input:disabled { opacity: 0.55; }
+  .quota-fields label:has(~ input:disabled) { color: var(--muted); }
   .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .row input[type="number"] { width: 9em; }
   button {
@@ -196,8 +204,10 @@
         <label class="switch"><input type="checkbox" id="quotas-on"> Reserve shares of the feed</label>
         <div class="quota-fields" id="quota-fields">
           <div id="shares" style="display:grid;gap:10px"></div>
-          <p class="summary" style="margin-top:12px">Featured topics (share of the feed, 0 means not featured)</p>
-          <div class="topics" id="topics"></div>
+          <fieldset style="margin-top:12px">
+            <legend class="topics-legend">Featured topics (share of the feed, 0 means not featured)</legend>
+            <div class="topics" id="topics"></div>
+          </fieldset>
           <p class="total" id="total" style="margin-top:10px"></p>
         </div>
       </fieldset>
@@ -220,7 +230,7 @@
         <span class="meta" id="meta"></span>
       </div>
       <div class="legend-row" id="bar-legend"></div>
-      <p class="error" id="error" hidden></p>
+      <p class="error" id="error" role="alert" hidden></p>
       <ol class="feed" id="feed"><li class="empty">Loading the feed...</li></ol>
     </section>
   </div>
@@ -288,23 +298,27 @@
     for (const [topic, input] of topicInputs) input.value = String(q.topics[topic] ?? 0);
   }
 
-  function readSettings() {
-    const weights = Object.fromEntries(CRITERIA.map(([key]) => [key, Number(byId("w-" + key).value)]));
+  /** The quota controls' current values, regardless of whether the "reserve shares" switch is on. */
+  function readQuotaControls() {
     const topics = {};
     for (const [topic, input] of topicInputs) {
       const share = Number(input.value);
       if (share > 0) topics[topic] = share;
     }
-    const body = {
-      reader: Number(byId("reader").value),
-      weights,
-      quotas: {
-        enabled: byId("quotas-on").checked,
-        topics,
-        follows: { publishers: Number(byId("s-publishers").value), communities: Number(byId("s-communities").value) },
-        surprise: Number(byId("s-surprise").value),
-      },
+    return {
+      topics,
+      follows: { publishers: Number(byId("s-publishers").value), communities: Number(byId("s-communities").value) },
+      surprise: Number(byId("s-surprise").value),
     };
+  }
+
+  function readSettings() {
+    const weights = Object.fromEntries(CRITERIA.map(([key]) => [key, Number(byId("w-" + key).value)]));
+    const enabled = byId("quotas-on").checked;
+    const quotas = enabled
+      ? { enabled: true, ...readQuotaControls() }
+      : { enabled: false, topics: {}, follows: { publishers: 0, communities: 0 }, surprise: 0 };
+    const body = { reader: Number(byId("reader").value), weights, quotas };
     const seedText = byId("seed").value.trim();
     if (seedText !== "") body.seed = Number(seedText);
     return body;
@@ -314,13 +328,14 @@
     for (const input of document.querySelectorAll('input[type="range"]')) {
       byId(input.id + "-value").textContent = Number(input.value).toFixed(2);
     }
-    const { quotas } = readSettings();
+    const quotas = readQuotaControls();
     const total = Object.values(quotas.topics).reduce((sum, s) => sum + s, 0)
       + quotas.follows.publishers + quotas.follows.communities + quotas.surprise;
     const totalEl = byId("total");
     totalEl.textContent = "Total of all shares: " + total.toFixed(2) + " of 1";
     totalEl.classList.toggle("over", total > 1 + 1e-9);
-    byId("quota-fields").setAttribute("aria-disabled", String(!quotas.enabled));
+    const enabled = byId("quotas-on").checked;
+    for (const input of byId("quota-fields").querySelectorAll("input")) input.disabled = !enabled;
 
     const r = options.readers[Number(byId("reader").value)].user;
     const interests = Object.entries(r.topicInterests).map(([t, v]) => t + " " + v).join(", ") || "none";
@@ -336,7 +351,9 @@
   function renderFeed(response) {
     const list = byId("feed");
     list.replaceChildren();
-    if (response.items.length === 0) list.append(el("li", { class: "empty" }, "No articles match this reader."));
+    if (response.items.length === 0) {
+      list.append(el("li", { class: "empty" }, "No articles match this reader. Try another reader, lower a weight, or switch quotas off."));
+    }
     for (const item of response.items) {
       const a = response.articles[item.articleId];
       const details = a
@@ -392,7 +409,7 @@
     if (id !== latest) return;
     byId("feed").classList.remove("stale");
     if (!res.ok) {
-      showError(body.error || "The server answered " + res.status + ".");
+      showError(body.error ? "The engine rejected these settings: " + body.error : "The server answered " + res.status + ".");
       return;
     }
     showError("");
@@ -410,12 +427,18 @@
   }
 
   async function start() {
+    let res;
     try {
-      options = await (await fetch("/demo/options")).json();
+      res = await fetch("/demo/options");
     } catch {
       showError("Could not load the demo options. Is npm start running?");
       return;
     }
+    if (!res.ok) {
+      showError("Could not load the demo options (status " + res.status + ").");
+      return;
+    }
+    options = await res.json();
     buildControls();
     applyDefaults();
     newSeed();
