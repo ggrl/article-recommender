@@ -3,7 +3,7 @@ import type { Repository } from "../data/repository.ts";
 import { assemble, type AssembledItem } from "./assembly/index.ts";
 import { activePins, placePins } from "./assembly/pins.ts";
 import { buildFilter, feedPools, readNextPools, unionPools, type PoolQuery } from "./candidates.ts";
-import { parseConfig } from "./config.ts";
+import { activeQuotas, parseConfig } from "./config.ts";
 import { reasonsFor } from "./explain.ts";
 import { createRng, randomSeed } from "./rng.ts";
 import { scoreCandidates } from "./scoring/index.ts";
@@ -68,7 +68,8 @@ export function createRecommender(deps: { repository: Repository; config: unknow
       const [articles, reads] = await Promise.all([repo.getArticles(ids), repo.getReads(ids, window)]);
       const candidates = articles.map((article) => ({ article, sourcePools: union.get(article.id) ?? [] }));
       const scored = scoreCandidates(candidates, profile.weights, { now, profile, user, reads, anchor });
-      const assembled = assemble(scored, pins, limit, profile.diversity.maxPerPublisher);
+      const quotas = request.mode === "feed" ? activeQuotas(config.profiles.feed) : undefined;
+      const assembled = assemble(scored, pins, limit, profile.diversity.maxPerPublisher, quotas && { quotas, user });
 
       return {
         items: assembled.map((item, i) => toItem(item, i + 1, profile.popularity.windowDays)),
@@ -105,7 +106,7 @@ function toItem(item: AssembledItem, rank: number, popularityWindowDays: number)
     finalScore,
     breakdown,
     sourcePools,
-    slotType: "ranked",
+    slotType: item.slotType,
     reasons: reasonsFor(breakdown, popularityWindowDays),
   };
 }

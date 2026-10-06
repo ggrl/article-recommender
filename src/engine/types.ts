@@ -112,13 +112,15 @@ export const recommendRequestSchema = z.discriminatedUnion("mode", [
 export type RecommendRequest = z.infer<typeof recommendRequestSchema>;
 export type Mode = RecommendRequest["mode"];
 
+export type ScoredSlot = "ranked" | "quota" | "surprise";
+
 export interface RecommendedItem {
   articleId: ArticleId;
   rank: number; // 1-based
   finalScore: number | null; // null for pins
   breakdown: Record<string, BreakdownEntry>;
   sourcePools: string[];
-  slotType: "ranked" | "pin";
+  slotType: ScoredSlot | "pin";
   reasons: string[];
   pinNote?: string;
 }
