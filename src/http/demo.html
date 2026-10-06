@@ -2,9 +2,432 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Feed Workbench</title>
+<style>
+  :root {
+    color-scheme: light;
+    --ground: #f5f6f3;
+    --surface: #ffffff;
+    --ink: #1b2220;
+    --muted: #5a6662;
+    --line: #d5dbd7;
+    --accent: #2f6d5f;
+    --accent-soft: #e2eeea;
+    --pin: #9a6b16;
+    --pin-soft: #f6ecd9;
+    --danger: #a63a2b;
+    --danger-soft: #f8e4e0;
+    --c-recency: #2f6d5f;
+    --c-popularity: #6a8fb3;
+    --c-topics: #b07a2a;
+    --c-follows: #8a5a8f;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --ground: #131816;
+      --surface: #1b221f;
+      --ink: #e4eae7;
+      --muted: #9aa8a3;
+      --line: #2e3834;
+      --accent: #74b9a6;
+      --accent-soft: #1f312c;
+      --pin: #d8ac5c;
+      --pin-soft: #2f2617;
+      --danger: #ef8e7f;
+      --danger-soft: #3a1f1b;
+      --c-recency: #74b9a6;
+      --c-popularity: #8fb3d6;
+      --c-topics: #d8ac5c;
+      --c-follows: #c49bc9;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font: 400 15px/1.5 var(--sans);
+    padding-inline: 16px;
+    padding-block: 24px 48px;
+  }
+  .page { max-width: 1180px; margin: 0 auto; display: grid; gap: 20px; }
+  header { display: grid; gap: 4px; }
+  h1 { font: 600 1.9rem/1.15 var(--serif); margin: 0; }
+  .lede { margin: 0; color: var(--muted); max-width: 70ch; }
+  .layout { display: grid; grid-template-columns: 340px 1fr; gap: 20px; align-items: start; }
+  @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
+
+  form {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px;
+    display: grid;
+    gap: 18px;
+  }
+  fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 10px; min-width: 0; }
+  legend {
+    padding: 0;
+    margin-bottom: 4px;
+    font: 600 0.72rem/1.2 var(--sans);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  label { font-weight: 500; }
+  select, input[type="number"] {
+    font: inherit;
+    color: var(--ink);
+    background: var(--ground);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 6px 8px;
+  }
+  select { width: 100%; }
+  .summary { margin: 0; font-size: 0.85rem; color: var(--muted); }
+  .slider { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; align-items: center; }
+  .slider input[type="range"] { grid-column: 1 / -1; width: 100%; accent-color: var(--accent); }
+  output { font: 0.85rem var(--mono); font-variant-numeric: tabular-nums; color: var(--muted); }
+  .switch { display: flex; align-items: center; gap: 8px; font-weight: 500; }
+  .switch input { accent-color: var(--accent); width: 18px; height: 18px; }
+  .topics { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; }
+  .topic { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 0.9rem; }
+  .topic input { width: 4.8em; padding: 4px 6px; }
+  .total { margin: 0; font: 0.85rem var(--mono); font-variant-numeric: tabular-nums; color: var(--muted); }
+  .total.over { color: var(--danger); font-weight: 600; }
+  .quota-fields[aria-disabled="true"] { opacity: 0.55; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .row input[type="number"] { width: 9em; }
+  button {
+    font: inherit;
+    font-weight: 500;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border: 1px solid transparent;
+    border-radius: 6px;
+    padding: 6px 12px;
+    cursor: pointer;
+  }
+  button:hover { border-color: var(--accent); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .results { display: grid; gap: 12px; min-width: 0; }
+  .results-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 16px; }
+  .results-head h2 { font: 600 1.3rem/1.2 var(--serif); margin: 0; }
+  .meta { font: 0.85rem var(--mono); color: var(--muted); }
+  .legend-row { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.8rem; color: var(--muted); }
+  .key { display: inline-flex; align-items: center; gap: 6px; }
+  .key i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  .error {
+    margin: 0;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: var(--danger-soft);
+    color: var(--danger);
+    white-space: pre-wrap;
+    font-size: 0.9rem;
+  }
+  ol.feed { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  .item {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 14px;
+    display: grid;
+    grid-template-columns: 2.2em 1fr auto;
+    gap: 4px 12px;
+    align-items: start;
+  }
+  .item.pin { background: var(--pin-soft); border-color: transparent; }
+  .rank { font: 500 1rem/1.6 var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+  .main { display: grid; gap: 6px; min-width: 0; }
+  .line { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+  .article { font: 0.88rem var(--mono); overflow-wrap: anywhere; }
+  .chip {
+    font: 600 0.68rem/1 var(--sans);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 4px 7px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+  .chip.ranked { background: transparent; border: 1px solid var(--line); color: var(--muted); }
+  .chip.surprise { background: var(--c-follows); color: var(--surface); }
+  .chip.quota { background: var(--accent); color: var(--surface); }
+  .chip.pin { background: var(--pin); color: var(--surface); }
+  .reasons { display: flex; flex-wrap: wrap; gap: 6px; }
+  .reason { font-size: 0.85rem; padding: 2px 8px; border-radius: 4px; background: var(--ground); }
+  .score { font: 500 0.95rem/1.6 var(--mono); font-variant-numeric: tabular-nums; text-align: right; }
+  .bar { grid-column: 2 / -1; display: flex; height: 6px; border-radius: 3px; background: var(--ground); overflow: hidden; }
+  .bar span { height: 100%; }
+  .empty { color: var(--muted); }
+  @media (prefers-reduced-motion: no-preference) { .feed { transition: opacity 120ms; } }
+  .feed.stale { opacity: 0.6; }
+</style>
 </head>
 <body>
-<p>The demo page is being built.</p>
+<div class="page">
+  <header>
+    <h1>Feed workbench</h1>
+    <p class="lede">Pick a sample reader, change the weights and quotas, and the feed below is rebuilt by the engine. Everything runs on synthetic seed data on this machine.</p>
+  </header>
+
+  <div class="layout">
+    <form id="settings" novalidate>
+      <fieldset>
+        <legend>Reader</legend>
+        <label for="reader">Sample reader</label>
+        <select id="reader"></select>
+        <p class="summary" id="reader-summary"></p>
+      </fieldset>
+
+      <fieldset id="weights">
+        <legend>Weights</legend>
+      </fieldset>
+
+      <fieldset>
+        <legend>Quotas</legend>
+        <label class="switch"><input type="checkbox" id="quotas-on"> Reserve shares of the feed</label>
+        <div class="quota-fields" id="quota-fields">
+          <div id="shares" style="display:grid;gap:10px"></div>
+          <p class="summary" style="margin-top:12px">Featured topics (share of the feed, 0 means not featured)</p>
+          <div class="topics" id="topics"></div>
+          <p class="total" id="total" style="margin-top:10px"></p>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Seed</legend>
+        <label for="seed">Random seed for the surprise sample</label>
+        <div class="row">
+          <input type="number" id="seed" min="0" max="4294967295" step="1">
+          <button type="button" id="new-seed">New seed</button>
+        </div>
+      </fieldset>
+
+      <div class="row"><button type="button" id="reset">Reset to defaults</button></div>
+    </form>
+
+    <section class="results" aria-labelledby="feed-title">
+      <div class="results-head">
+        <h2 id="feed-title">Feed</h2>
+        <span class="meta" id="meta"></span>
+      </div>
+      <div class="legend-row" id="bar-legend"></div>
+      <p class="error" id="error" hidden></p>
+      <ol class="feed" id="feed"><li class="empty">Loading the feed...</li></ol>
+    </section>
+  </div>
+</div>
+
+<script>
+  const CRITERIA = [
+    ["recency", "Freshness"],
+    ["popularity", "Popularity"],
+    ["topics", "Interest match"],
+    ["follows", "Follows"],
+  ];
+  const SHARES = [
+    ["publishers", "Followed publishers"],
+    ["communities", "Followed communities"],
+    ["surprise", "Surprise"],
+  ];
+  const MAX_SEED = 4294967295;
+  const byId = (id) => document.getElementById(id);
+  const topicInputs = new Map();
+  let options;
+  let timer;
+  let latest = 0;
+
+  /** Builds an element; strings become text nodes, so nothing is parsed as HTML. */
+  function el(tag, attrs, ...children) {
+    const node = document.createElement(tag);
+    for (const [key, value] of Object.entries(attrs || {})) {
+      if (key === "class") node.className = value;
+      else node.setAttribute(key, value);
+    }
+    node.append(...children);
+    return node;
+  }
+
+  function slider(id, label, max, step) {
+    const input = el("input", { type: "range", id, min: "0", max: String(max), step: String(step) });
+    const out = el("output", { for: id, id: id + "-value" });
+    return el("div", { class: "slider" }, el("label", { for: id }, label), out, input);
+  }
+
+  function buildControls() {
+    const reader = byId("reader");
+    options.readers.forEach((r, i) => reader.append(el("option", { value: String(i) }, r.label)));
+    for (const [key, label] of CRITERIA) byId("weights").append(slider("w-" + key, label, 2, 0.1));
+    for (const [key, label] of SHARES) byId("shares").append(slider("s-" + key, label, 1, 0.05));
+    options.topics.forEach((topic, i) => {
+      const input = el("input", { type: "number", id: "topic-" + i, min: "0", max: "1", step: "0.05", value: "0" });
+      topicInputs.set(topic, input);
+      byId("topics").append(el("div", { class: "topic" }, el("label", { for: "topic-" + i }, topic), input));
+    });
+    for (const [key, label] of CRITERIA) {
+      byId("bar-legend").append(el("span", { class: "key" }, el("i", { style: "background:var(--c-" + key + ")" }), label));
+    }
+  }
+
+  function applyDefaults() {
+    const { weights, quotas } = options.defaults;
+    for (const [key] of CRITERIA) byId("w-" + key).value = String(weights[key] ?? 0);
+    const q = quotas || { enabled: false, topics: {}, follows: { publishers: 0, communities: 0 }, surprise: 0 };
+    byId("quotas-on").checked = q.enabled;
+    byId("s-publishers").value = String(q.follows.publishers);
+    byId("s-communities").value = String(q.follows.communities);
+    byId("s-surprise").value = String(q.surprise);
+    for (const [topic, input] of topicInputs) input.value = String(q.topics[topic] ?? 0);
+  }
+
+  function readSettings() {
+    const weights = Object.fromEntries(CRITERIA.map(([key]) => [key, Number(byId("w-" + key).value)]));
+    const topics = {};
+    for (const [topic, input] of topicInputs) {
+      const share = Number(input.value);
+      if (share > 0) topics[topic] = share;
+    }
+    const body = {
+      reader: Number(byId("reader").value),
+      weights,
+      quotas: {
+        enabled: byId("quotas-on").checked,
+        topics,
+        follows: { publishers: Number(byId("s-publishers").value), communities: Number(byId("s-communities").value) },
+        surprise: Number(byId("s-surprise").value),
+      },
+    };
+    const seedText = byId("seed").value.trim();
+    if (seedText !== "") body.seed = Number(seedText);
+    return body;
+  }
+
+  function updateLabels() {
+    for (const input of document.querySelectorAll('input[type="range"]')) {
+      byId(input.id + "-value").textContent = Number(input.value).toFixed(2);
+    }
+    const { quotas } = readSettings();
+    const total = Object.values(quotas.topics).reduce((sum, s) => sum + s, 0)
+      + quotas.follows.publishers + quotas.follows.communities + quotas.surprise;
+    const totalEl = byId("total");
+    totalEl.textContent = "Total of all shares: " + total.toFixed(2) + " of 1";
+    totalEl.classList.toggle("over", total > 1 + 1e-9);
+    byId("quota-fields").setAttribute("aria-disabled", String(!quotas.enabled));
+
+    const r = options.readers[Number(byId("reader").value)].user;
+    const interests = Object.entries(r.topicInterests).map(([t, v]) => t + " " + v).join(", ") || "none";
+    const follows = [...r.followedPublishers, ...r.followedCommunities].join(", ") || "none";
+    byId("reader-summary").textContent =
+      "Reads " + [r.language, ...r.fallbackLanguages].join(", ") + ". Interests: " + interests + ". Follows: " + follows + ".";
+  }
+
+  function age(hours) {
+    return hours < 48 ? hours + " h old" : Math.round(hours / 24) + " days old";
+  }
+
+  function renderFeed(response) {
+    const list = byId("feed");
+    list.replaceChildren();
+    if (response.items.length === 0) list.append(el("li", { class: "empty" }, "No articles match this reader."));
+    for (const item of response.items) {
+      const a = response.articles[item.articleId];
+      const details = a
+        ? [item.articleId, a.publisherId, a.topics.join(", ") || "no topics", age(a.ageHours)].join(" · ")
+        : item.articleId;
+      const reasons = el("div", { class: "reasons" }, ...item.reasons.map((r) => el("span", { class: "reason" }, r)));
+      const main = el("div", { class: "main" },
+        el("div", { class: "line" }, el("span", { class: "chip " + item.slotType }, item.slotType), el("span", { class: "article" }, details)),
+        reasons);
+      const score = el("span", { class: "score" }, item.finalScore === null ? "pinned" : item.finalScore.toFixed(3));
+      const row = el("li", { class: "item" + (item.slotType === "pin" ? " pin" : "") },
+        el("span", { class: "rank" }, String(item.rank)), main, score);
+      const entries = Object.entries(item.breakdown);
+      if (entries.length > 0) {
+        const totalWeight = entries.reduce((sum, [, e]) => sum + e.weight, 0);
+        const bar = el("div", { class: "bar", role: "img", "aria-label": "Score made of: " + entries.map(([k, e]) => k + " " + e.contribution.toFixed(2)).join(", ") });
+        for (const [key, e] of entries) {
+          const share = totalWeight > 0 ? (e.contribution / totalWeight) * 100 : 0;
+          bar.append(el("span", { style: "width:" + share.toFixed(2) + "%;background:var(--c-" + key + ")", title: key + " " + e.score.toFixed(3) + " x " + e.weight }));
+        }
+        row.append(bar);
+      }
+      list.append(row);
+    }
+    byId("meta").textContent = response.meta.candidateCount + " candidates, seed " + response.meta.seed;
+  }
+
+  function showError(message) {
+    const box = byId("error");
+    box.textContent = message;
+    box.hidden = message === "";
+  }
+
+  async function refresh() {
+    const id = ++latest;
+    byId("feed").classList.add("stale");
+    let res;
+    let body;
+    try {
+      res = await fetch("/demo/feed", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(readSettings()),
+      });
+      body = await res.json();
+    } catch {
+      if (id === latest) {
+        showError("The demo server did not answer. Is npm start still running?");
+        byId("feed").classList.remove("stale");
+      }
+      return;
+    }
+    if (id !== latest) return;
+    byId("feed").classList.remove("stale");
+    if (!res.ok) {
+      showError(body.error || "The server answered " + res.status + ".");
+      return;
+    }
+    showError("");
+    renderFeed(body);
+  }
+
+  function schedule() {
+    updateLabels();
+    clearTimeout(timer);
+    timer = setTimeout(refresh, 200);
+  }
+
+  function newSeed() {
+    byId("seed").value = String(Math.floor(Math.random() * (MAX_SEED + 1)));
+  }
+
+  async function start() {
+    try {
+      options = await (await fetch("/demo/options")).json();
+    } catch {
+      showError("Could not load the demo options. Is npm start running?");
+      return;
+    }
+    buildControls();
+    applyDefaults();
+    newSeed();
+    byId("settings").addEventListener("input", schedule);
+    byId("settings").addEventListener("submit", (event) => event.preventDefault());
+    byId("new-seed").addEventListener("click", () => { newSeed(); schedule(); });
+    byId("reset").addEventListener("click", () => { applyDefaults(); schedule(); });
+    updateLabels();
+    refresh();
+  }
+
+  start();
+</script>
 </body>
 </html>
