@@ -87,16 +87,21 @@ describe("demo feed", () => {
     const tooMuch = await demoFeed({ reader: 0, weights: defaults.weights, quotas: overbooked });
     expect(tooMuch.statusCode).toBe(400);
     expect(tooMuch.json().error).toMatch(/more than 1/);
-    expect(tooMuch.json().error).toBe("quota shares may not add up to more than 1");
+    expect(tooMuch.json().error).toBe("quota shares may not add up to more than 1 (quotas)");
 
     const allOff = await demoFeed({ reader: 0, weights: { recency: 0, popularity: 0, topics: 0, follows: 0 }, quotas: defaults.quotas });
     expect(allOff.statusCode).toBe(400);
     expect(allOff.json().error).toMatch(/at least one weight/);
-    expect(allOff.json().error).toBe("at least one weight must be above 0");
+    expect(allOff.json().error).toBe("at least one weight must be above 0 (weights)");
 
     const unknownWeight = await demoFeed({ reader: 0, weights: { ...defaults.weights, location: 1 }, quotas: defaults.quotas });
     expect(unknownWeight.statusCode).toBe(400);
     expect(unknownWeight.json().error).toMatch(/location/);
+
+    const topicTooBig = { enabled: true, topics: { climate: 1.5 }, follows: { communities: 0, publishers: 0 }, surprise: 0 };
+    const overshare = await demoFeed({ reader: 0, weights: defaults.weights, quotas: topicTooBig });
+    expect(overshare.statusCode).toBe(400);
+    expect(overshare.json().error).toMatch(/\(climate\)$/);
   });
 
   it("answers 400 for a reader that does not exist or an unknown body key", async () => {
@@ -106,7 +111,10 @@ describe("demo feed", () => {
     expect((await demoFeed({ reader: 0, ...settings, limit: 5 })).statusCode).toBe(400);
   });
 
-  it("answers 400 for an invalid seed", async () => {
-    expect((await demoFeed({ reader: 0, seed: -1, ...settings })).statusCode).toBe(400);
+  it("answers 400 for an invalid seed, naming the field and dropping zod's markers", async () => {
+    const res = await demoFeed({ reader: 0, seed: -1, ...settings });
+    expect(res.statusCode).toBe(400);
+    expect(res.json().error).toContain("(seed)");
+    expect(res.json().error).not.toContain("✖");
   });
 });

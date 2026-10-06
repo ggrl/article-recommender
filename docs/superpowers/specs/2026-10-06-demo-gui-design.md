@@ -35,7 +35,7 @@ One screen: settings on the left, the feed on the right; stacked on a narrow win
 **Feed (20 articles):** per row the rank, a slot chip (`ranked`, `quota`,
 `surprise`, `pin`), the article ID, publisher, topics and age in hours or days
 (seed articles have no titles), the reasons, the final score, and a stacked bar of
-each criterion's contribution. Pin rows show the editor's note instead of a score.
+each criterion's contribution. Pin rows show "pinned" in the score column; the editor's note is their reason.
 
 **Behaviour:** the feed refreshes about 200 ms after the last change; no Apply
 button. If the server answers with an error, the message appears above the feed and

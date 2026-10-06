@@ -24,14 +24,28 @@ export function topicsOf(articles: Article[]): string[] {
   return [...new Set(articles.flatMap((a) => a.topics))].sort(compareIds);
 }
 
-/** Strips parseConfig's "Invalid config:" header and zod's "→ at ..." path lines, leaving plain issue text. */
-export function plainConfigError(message: string): string {
+/**
+ * Strips parseConfig's "Invalid config:" header and turns each zod issue's
+ * "✖ <message>" plus "→ at <path>" pair into "<message> (<last path segment>)";
+ * an issue with no path line is left as its plain message.
+ */
+export function plainValidationError(message: string): string {
   const lines = message.split("\n").map((line) => line.trim());
   if (lines[0] === "Invalid config:") lines.shift();
-  return lines
-    .filter((line) => !line.startsWith("→"))
-    .map((line) => (line.startsWith("✖ ") ? line.slice(2) : line))
-    .join("; ");
+  const issues: string[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line.startsWith("✖ ")) continue;
+    let issue = line.slice(2);
+    const next = lines[i + 1];
+    if (next?.startsWith("→ at ")) {
+      const path = next.slice("→ at ".length);
+      issue += ` (${path.split(".").at(-1)})`;
+      i++;
+    }
+    issues.push(issue);
+  }
+  return issues.join("; ");
 }
 
 /** Local-only demo routes (D31): the page, its options, and a feed built from posted weights and quotas. */
@@ -64,7 +78,7 @@ export function registerDemo(app: FastifyInstance, deps: DemoDeps): void {
       config = parseConfig({ ...base, profiles: { ...base.profiles, feed: { ...base.profiles.feed, weights, quotas } } });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      return reply.code(400).send({ error: plainConfigError(message) });
+      return reply.code(400).send({ error: plainValidationError(message) });
     }
 
     const now = deps.now();
@@ -87,7 +101,7 @@ export function registerDemo(app: FastifyInstance, deps: DemoDeps): void {
       }
       return { ...response, articles };
     } catch (error) {
-      if (error instanceof RequestError) return reply.code(400).send({ error: error.message });
+      if (error instanceof RequestError) return reply.code(400).send({ error: plainValidationError(error.message) });
       throw error;
     }
   });

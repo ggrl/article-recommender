@@ -369,7 +369,7 @@
       const entries = Object.entries(item.breakdown);
       if (entries.length > 0) {
         const totalWeight = entries.reduce((sum, [, e]) => sum + e.weight, 0);
-        const bar = el("div", { class: "bar", role: "img", "aria-label": "Score made of: " + entries.map(([k, e]) => k + " " + e.contribution.toFixed(2)).join(", ") });
+        const bar = el("div", { class: "bar", role: "img", "aria-label": "Score made of: " + entries.map(([k, e]) => k + " " + (totalWeight > 0 ? e.contribution / totalWeight : 0).toFixed(2)).join(", ") });
         for (const [key, e] of entries) {
           const share = totalWeight > 0 ? (e.contribution / totalWeight) * 100 : 0;
           bar.append(el("span", { style: "width:" + share.toFixed(2) + "%;background:var(--c-" + key + ")", title: key + " " + e.score.toFixed(3) + " x " + e.weight }));

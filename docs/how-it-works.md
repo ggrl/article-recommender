@@ -16,7 +16,7 @@ flowchart TD
     F1["Assemble the feed<br/>editor pins keep their fixed spots,<br/>quota slots are reserved, the rest is filled by score,<br/>at most a few articles per publisher"]
     F2["Assemble read next<br/>filled by score,<br/>at most a few articles per publisher"]
     H["Order by score<br/>pins stay at their spots"]
-    I["Response<br/>each article with a plain-language reason<br/>and its score breakdown"]
+    I["Response<br/>each article with a plain-language reason<br/>and, except for pins, its score breakdown"]
 
     A --> B
     B -- feed --> C1
@@ -60,8 +60,9 @@ flowchart TD
 6. **Order.** The chosen articles are sorted by score; pinned articles stay at
    their spots.
 7. **Response.** Each article comes with one or two plain-language reasons, such as
-   "New" or "Matches your interest in climate", and the score per criterion, so
-   every position can be explained.
+   "New" or "Matches your interest in climate", and every article except pinned ones
+   also comes with its score per criterion, so every position can be explained. A
+   pinned article's reason is the editor's note.
 
 Settings such as weights, list sizes and quota shares live in
 `config/default.json`; see the README. Quotas and surprise slots are off by
