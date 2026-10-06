@@ -4,8 +4,10 @@ Prototype recommendation engine for a multilingual, non-profit European news
 platform. One explainable engine serves the personalised feed and "read next"
 suggestions. It runs on synthetic seed data; there is no real client data here.
 
+How it works, as a diagram: `docs/how-it-works.md`.
+
 The work order is `display-europe-recommender-prototype.md`, the design notes
-(phase 1 and phase 2a) are in `docs/superpowers/specs/`, and settled rulings are
+(phases 1, 2a and 2b) are in `docs/superpowers/specs/`, and settled rulings are
 in `DECISIONS.md`.
 
 ## Setup
