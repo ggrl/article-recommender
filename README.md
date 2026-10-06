@@ -22,6 +22,10 @@ npm start        # demo on http://127.0.0.1:3000 (PORT to change)
 
 ## Demo endpoints
 
+- `GET /` opens the demo page: pick a sample reader, set the feed weights and
+  quotas, and see the feed change. It uses `GET /demo/options` and
+  `POST /demo/feed`, which take a whole feed config per request, so the demo must
+  stay on 127.0.0.1 (`DECISIONS.md` entry 31).
 - `GET /health`
 - `POST /recommend` with `{ mode, user, limit, now?, anchorArticleId?, seed? }`.
   `mode` is `feed` or `readNext`; `readNext` needs `anchorArticleId`. `now` is an
