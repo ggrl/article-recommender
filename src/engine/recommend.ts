@@ -4,7 +4,7 @@ import { assemble, type AssembledItem } from "./assembly/index.ts";
 import { activePins, placePins } from "./assembly/pins.ts";
 import { buildFilter, feedPools, readNextPools, unionPools, type PoolQuery } from "./candidates.ts";
 import { activeQuotas, parseConfig } from "./config.ts";
-import { reasonsFor } from "./explain.ts";
+import { slotReasons } from "./explain.ts";
 import { createRng, randomSeed } from "./rng.ts";
 import { scoreCandidates } from "./scoring/index.ts";
 import { popularityWindow } from "./scoring/popularity.ts";
@@ -107,6 +107,6 @@ function toItem(item: AssembledItem, rank: number, popularityWindowDays: number)
     breakdown,
     sourcePools,
     slotType: item.slotType,
-    reasons: reasonsFor(breakdown, popularityWindowDays),
+    reasons: slotReasons(item, breakdown, popularityWindowDays),
   };
 }

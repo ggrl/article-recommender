@@ -1,4 +1,4 @@
-import type { BreakdownEntry } from "./types.ts";
+import type { BreakdownEntry, ScoredSlot } from "./types.ts";
 
 /** Every user-facing reason, keyed so the texts can be translated later. */
 export const reasonTemplates = {
@@ -8,6 +8,8 @@ export const reasonTemplates = {
   topics: (topic: string) => `Matches your interest in ${topic}`,
   followsPublisher: () => "From a publisher you follow",
   followsCommunity: () => "From a community you follow",
+  surprise: () => "Something outside your usual topics",
+  featuredTopic: (topic: string) => `Featured topic: ${topic}`,
   fallback: () => "Recommended for you",
 };
 
@@ -40,4 +42,16 @@ function reasonText(criterionId: string, detail: string | undefined, popularityW
     default:
       throw new Error(`No reason template for criterion "${criterionId}"`);
   }
+}
+
+/** Surprise slots say only why they are there; a featured topic leads its item's reasons (work order 2.10, D27). */
+export function slotReasons(
+  slot: { slotType: ScoredSlot; featuredTopic?: string },
+  breakdown: Record<string, BreakdownEntry>,
+  popularityWindowDays: number,
+): string[] {
+  if (slot.slotType === "surprise") return [reasonTemplates.surprise()];
+  const reasons = reasonsFor(breakdown, popularityWindowDays);
+  if (slot.featuredTopic === undefined) return reasons;
+  return [reasonTemplates.featuredTopic(slot.featuredTopic), ...reasons].slice(0, MAX_REASONS);
 }

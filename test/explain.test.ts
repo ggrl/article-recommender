@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { reasonsFor } from "../src/engine/explain.ts";
+import { reasonsFor, slotReasons } from "../src/engine/explain.ts";
 
 const entry = (contribution: number) => ({ score: contribution, weight: 1, contribution });
 
@@ -39,5 +39,22 @@ describe("reasonsFor", () => {
   it("throws for a topics or follows reason without its detail", () => {
     expect(() => reasonsFor({ topics: entry(0.5) }, 7)).toThrow(/needs the matched topic/);
     expect(() => reasonsFor({ follows: entry(0.5) }, 7)).toThrow(/needs "publisher" or "community"/);
+  });
+});
+
+describe("slotReasons", () => {
+  const breakdown = { recency: entry(0.4), popularity: entry(0.2) };
+
+  it("gives a surprise item only the surprise reason", () => {
+    expect(slotReasons({ slotType: "surprise" }, breakdown, 7)).toEqual(["Something outside your usual topics"]);
+  });
+
+  it("puts the featured topic first, two reasons at most", () => {
+    expect(slotReasons({ slotType: "quota", featuredTopic: "climate" }, breakdown, 7)).toEqual(["Featured topic: climate", "New"]);
+  });
+
+  it("keeps the usual reasons for every other slot", () => {
+    expect(slotReasons({ slotType: "quota" }, breakdown, 7)).toEqual(["New", "Popular this week"]);
+    expect(slotReasons({ slotType: "ranked" }, breakdown, 7)).toEqual(["New", "Popular this week"]);
   });
 });

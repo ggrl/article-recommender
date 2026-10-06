@@ -176,3 +176,39 @@ describe("personalised feed", () => {
     }
   });
 });
+
+describe("quotas", () => {
+  const repository = createMemoryRepository({
+    articles: [
+      makeArticle({ id: "fresh1", publisherId: "p1", publishedAt: hoursAgo(1), topics: ["sport"] }),
+      makeArticle({ id: "fresh2", publisherId: "p2", publishedAt: hoursAgo(1), topics: ["sport"] }),
+      makeArticle({ id: "fresh3", publisherId: "p3", publishedAt: hoursAgo(1), topics: ["sport"] }),
+      makeArticle({ id: "climate", publisherId: "p4", publishedAt: hoursAgo(40), topics: ["climate"] }),
+      makeArticle({ id: "odd", publisherId: "p5", publishedAt: hoursAgo(60), topics: ["gardening"] }),
+    ],
+    reads: [],
+    pins: [],
+  });
+  const config = loadDefaultConfig();
+  config.profiles.feed.quotas = { enabled: true, topics: { climate: 0.25 }, follows: { communities: 0, publishers: 0 }, surprise: 0.25 };
+  const user = makeUser({ topicInterests: { sport: 1 } });
+  const quotaFeed = (seed: number) => createRecommender({ repository, config }).recommend(feed({ user, limit: 4, seed }));
+
+  it("reserves a featured topic slot and a surprise slot, each with its reason", async () => {
+    const { items } = await quotaFeed(1);
+    expect(items.map((i) => [i.articleId, i.slotType])).toEqual([
+      ["fresh1", "ranked"],
+      ["fresh2", "ranked"],
+      ["climate", "quota"],
+      ["odd", "surprise"],
+    ]);
+    expect(items[2]?.reasons[0]).toBe("Featured topic: climate");
+    expect(items[3]?.reasons).toEqual(["Something outside your usual topics"]);
+    expect(items[3]?.sourcePools).toContain("exploration");
+    expect(items[3]?.finalScore).toEqual(expect.any(Number));
+  });
+
+  it("gives an identical response for the same seed", async () => {
+    expect(await quotaFeed(5)).toEqual(await quotaFeed(5));
+  });
+});
