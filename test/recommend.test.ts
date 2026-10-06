@@ -39,7 +39,7 @@ describe("feed", () => {
       expect(Object.keys(item.breakdown)).toEqual(["recency", "popularity", "topics", "follows"]);
       expect(item.reasons.length).toBeGreaterThan(0);
     }
-    expect(meta).toEqual({ configVersion: "2026-10-proto-1", candidateCount: 5, profile: "feed" });
+    expect(meta).toEqual({ configVersion: "2026-10-proto-1", candidateCount: 5, profile: "feed", seed: expect.any(Number) });
   });
 
   it("puts an active pin at its position and never an expired one", async () => {
@@ -109,6 +109,10 @@ describe("read next", () => {
   it("rejects a read next request without an anchor", async () => {
     await expect(recommender().recommend({ ...readNext, anchorArticleId: undefined })).rejects.toThrow(RequestError);
   });
+
+  it("accepts a seed", async () => {
+    expect((await recommender().recommend({ ...readNext, seed: 3 })).meta.seed).toBe(3);
+  });
 });
 
 describe("request validation", () => {
@@ -119,6 +123,20 @@ describe("request validation", () => {
 
   it("rejects an invalid date", async () => {
     await expect(recommender().recommend(feed({ now: new Date("not a date") }))).rejects.toThrow(RequestError);
+  });
+
+  it("echoes a sent seed in meta", async () => {
+    expect((await recommender().recommend(feed({ seed: 7 }))).meta.seed).toBe(7);
+  });
+
+  it("draws an integer seed when none is sent", async () => {
+    expect(Number.isInteger((await recommender().recommend(feed())).meta.seed)).toBe(true);
+  });
+
+  it("rejects a seed that is not an integer in [0, 2^32 - 1]", async () => {
+    for (const seed of [-1, 1.5, 2 ** 32]) {
+      await expect(recommender().recommend(feed({ seed }))).rejects.toThrow(RequestError);
+    }
   });
 });
 

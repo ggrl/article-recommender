@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MAX_SEED } from "./rng.ts";
 import type { Profile } from "./config.ts";
 
 export type ArticleId = string; // canonical ID, shared by all translations
@@ -95,15 +96,17 @@ export const userContextSchema = z.strictObject({
 export type UserContext = z.infer<typeof userContextSchema>;
 
 const limit = z.number().int().min(1).max(100);
+const seed = z.number().int().min(0).max(MAX_SEED).optional();
 
 export const recommendRequestSchema = z.discriminatedUnion("mode", [
-  z.strictObject({ mode: z.literal("feed"), user: userContextSchema, limit, now: z.date() }),
+  z.strictObject({ mode: z.literal("feed"), user: userContextSchema, limit, now: z.date(), seed }),
   z.strictObject({
     mode: z.literal("readNext"),
     user: userContextSchema,
     anchorArticleId: z.string().min(1),
     limit,
     now: z.date(),
+    seed,
   }),
 ]);
 export type RecommendRequest = z.infer<typeof recommendRequestSchema>;
@@ -122,7 +125,7 @@ export interface RecommendedItem {
 
 export interface RecommendResponse {
   items: RecommendedItem[];
-  meta: { configVersion: string; candidateCount: number; profile: Mode };
+  meta: { configVersion: string; candidateCount: number; profile: Mode; seed: number };
 }
 
 export interface Publisher {

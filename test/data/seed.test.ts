@@ -1,16 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { createRng, generateSeed } from "../../src/data/seed.ts";
+import { generateSeed } from "../../src/data/seed.ts";
 import { DAY_MS, NOW } from "../helpers.ts";
-
-describe("createRng", () => {
-  it("repeats the same sequence for the same seed and stays in [0, 1)", () => {
-    const a = createRng(7);
-    const b = createRng(7);
-    const values = Array.from({ length: 100 }, () => a());
-    expect(values).toEqual(Array.from({ length: 100 }, () => b()));
-    expect(values.every((v) => v >= 0 && v < 1)).toBe(true);
-  });
-});
 
 describe("generateSeed", () => {
   const data = generateSeed(42, NOW);

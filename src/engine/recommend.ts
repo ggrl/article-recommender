@@ -5,6 +5,7 @@ import { activePins, placePins } from "./assembly/pins.ts";
 import { buildFilter, feedPools, readNextPools, unionPools, type PoolQuery } from "./candidates.ts";
 import { parseConfig } from "./config.ts";
 import { reasonsFor } from "./explain.ts";
+import { randomSeed } from "./rng.ts";
 import { scoreCandidates } from "./scoring/index.ts";
 import { popularityWindow } from "./scoring/popularity.ts";
 import {
@@ -44,6 +45,7 @@ export function createRecommender(deps: { repository: Repository; config: unknow
     async recommend(input) {
       const request = parseRequest(input);
       const { user, now, limit } = request;
+      const seed = request.seed ?? randomSeed();
       const profile = config.profiles[request.mode];
       const window = popularityWindow(now, profile.popularity.windowDays);
 
@@ -70,7 +72,7 @@ export function createRecommender(deps: { repository: Repository; config: unknow
 
       return {
         items: assembled.map((item, i) => toItem(item, i + 1, profile.popularity.windowDays)),
-        meta: { configVersion: config.version, candidateCount: union.size, profile: request.mode },
+        meta: { configVersion: config.version, candidateCount: union.size, profile: request.mode, seed },
       };
     },
   };

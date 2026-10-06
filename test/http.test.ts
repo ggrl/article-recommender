@@ -42,4 +42,9 @@ describe("HTTP demo", () => {
     const res = await post({ mode: "readNext", user, anchorArticleId: "nope", limit: 5, now: NOW.toISOString() });
     expect(res.statusCode).toBe(400);
   });
+
+  it("passes a seed through", async () => {
+    const res = await post({ mode: "feed", user, limit: 5, now: NOW.toISOString(), seed: 9 });
+    expect(res.json().meta.seed).toBe(9);
+  });
 });

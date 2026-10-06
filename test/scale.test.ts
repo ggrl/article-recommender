@@ -8,8 +8,8 @@ const data = generateSeed(42, NOW);
 const recommender = createRecommender({ repository: createMemoryRepository(data), config: loadDefaultConfig() });
 const [coldStart] = data.users;
 const seeded = data.users[1];
-const feed = { mode: "feed", user: coldStart, limit: 20, now: NOW };
-const seededFeed = { mode: "feed", user: seeded, limit: 20, now: NOW };
+const feed = { mode: "feed", user: coldStart, limit: 20, now: NOW, seed: 1 };
+const seededFeed = { mode: "feed", user: seeded, limit: 20, now: NOW, seed: 1 };
 
 describe("on seed data", () => {
   it("gives the cold-start user a full-length feed", async () => {
