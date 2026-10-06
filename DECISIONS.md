@@ -254,3 +254,77 @@ old ruling silently.
   for the follows and topics pools.
 - **Consequences:** raise with the client together with the quota question (D18).
   Tuning means editing `config/default.json`, not code.
+
+## 25. A quota is a guaranteed share (2026-10-06)
+
+- **Context:** the client has not said whether "30% of the feed" means reserved
+  slots or a ranking bias (D18).
+- **Decision:** build reserved slots as the work order specifies (2.9), behind
+  `quotas.enabled`, off in `config/default.json`.
+- **Alternatives considered:** a score boost per bucket, which mostly duplicates the
+  criterion weights; waiting for the client.
+- **Consequences:** a ranking bias stays available through the weights. If the
+  client means a bias, quotas stay off and nothing else changes.
+
+## 26. The seed is optional and echoed (2026-10-06)
+
+- **Context:** the exploration pool samples with a seeded generator. Supersedes D9.
+- **Decision:** the request accepts an optional integer `seed` in [0, 2^32 - 1].
+  Without one the engine draws a random seed. Every response returns the seed it
+  used as `meta.seed`.
+- **Alternatives considered:** a fixed default seed, which shows a user the same
+  sample on every refresh; a seed from user and day, which needs a user ID the
+  request does not carry.
+- **Consequences:** a response is reproducible by sending its `meta.seed` back.
+  Requests without a seed are no longer identical run to run when surprise slots
+  are on.
+
+## 27. Topic quotas are featured topics set by editors (2026-10-06)
+
+- **Context:** the work order gives `quotas.topics` as an empty map without saying
+  what its keys are.
+- **Decision:** keys are topic names, values are shares. A topic quota guarantees
+  that share of every feed to the topic, whatever the user's interests. Its items
+  say "Featured topic: {topic}".
+- **Alternatives considered:** one share for articles matching any of the user's
+  interests, which largely duplicates the topics weight.
+- **Consequences:** a user can see articles on a topic they never chose; the reason
+  says why.
+
+## 28. Reserved items are ordered by score (2026-10-06)
+
+- **Context:** work order 2.9 step 5 sorts all non-pinned items by final score.
+  Surprise items match no topic or follow, so with the default weights they nearly
+  always score lowest.
+- **Decision:** keep the work order's ordering. Reserved items are in the list but
+  not moved up.
+- **Alternatives considered:** spreading reserved items through the list; fixed
+  configurable positions as for pins.
+- **Consequences:** with `limit` 20 and `surprise` 0.2, surprise items will mostly
+  be ranks 17 to 20, so a reader who stops early may not see them. Raise with the
+  client together with D24.
+
+## 29. The exploration pool runs only with surprise slots (2026-10-06)
+
+- **Context:** exploration articles match nothing personal and rarely rank high
+  without reserved slots (D18).
+- **Decision:** the pool has size 0, and no query, unless quotas are enabled and
+  `surprise` is above 0. It samples `pools.exploration` articles from the newest
+  `pools.recent` unmatched ones; the repository returns them newest first and the
+  engine samples.
+- **Alternatives considered:** always querying it, which makes the default feed
+  depend on the seed for almost no visible effect.
+- **Consequences:** the default feed stays deterministic. The repository holds no
+  randomness.
+
+## 30. Bucket order and rounding (2026-10-06)
+
+- **Context:** an article can belong to several buckets, and `round(share × slots)`
+  can add up to more than the free slots.
+- **Decision:** buckets fill in a fixed order: featured topics alphabetically,
+  followed publishers, followed communities, surprise. An article goes to the first
+  bucket that takes it. Each target is capped at the slots still free, so
+  over-booking shortens the later buckets.
+- **Alternatives considered:** largest-remainder apportionment across buckets.
+- **Consequences:** output is deterministic and assembly never fails; surprise is
+  the bucket most likely to come up short when shares are high.
