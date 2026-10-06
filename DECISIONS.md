@@ -328,3 +328,20 @@ old ruling silently.
 - **Alternatives considered:** largest-remainder apportionment across buckets.
 - **Consequences:** output is deterministic and assembly never fails; surprise is
   the bucket most likely to come up short when shares are high.
+
+## 31. The demo page takes a whole feed config per request, local only (2026-10-06)
+
+- **Context:** a local page for trying the feed with different weights and quotas.
+  The engine reads its config once, at startup.
+- **Decision:** demo-only routes in `src/http/demo.ts`. `POST /demo/feed` lays the
+  posted feed `weights` and `quotas` over `config/default.json`, validates the result
+  with `parseConfig` and builds an engine for that request. The engine's request
+  shape does not change. The page renders all server text with `textContent`, never
+  `innerHTML`, and loads nothing from outside the demo server.
+- **Alternatives considered:** per-request overrides in the engine's `recommend`
+  request, which changes the public request for a demo-only need; the page
+  rewriting `config/default.json` and the server reloading it, which edits a
+  committed file and lets concurrent requests see each other's settings.
+- **Consequences:** the demo routes let any caller choose the engine's config. They
+  fall under D17: never exposed beyond 127.0.0.1 without input limits first, and a
+  request's featured-topic map has no size limit until then.
