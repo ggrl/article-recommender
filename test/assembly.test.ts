@@ -210,4 +210,11 @@ describe("assemble with quotas", () => {
     const items = assemble(candidates, pins, 3, 3, { quotas: quotas({ surprise: 0.5 }), user });
     expect(slots(items)).toEqual(["pin:p", "t0:ranked", "x:surprise"]);
   });
+
+  it("fills featured topics alphabetically, whatever the config order", () => {
+    const candidates = [member("both", 0.5, { topics: ["a", "b"] }), member("b1", 0.4, { topics: ["b"] })];
+    const items = assemble(candidates, new Map(), 2, 3, { quotas: quotas({ topics: { b: 0.5, a: 0.5 } }), user });
+    const both = items.find((i) => i.kind === "scored" && i.candidate.article.id === "both");
+    expect(both?.kind === "scored" && both.featuredTopic).toBe("a");
+  });
 });

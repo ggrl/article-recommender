@@ -62,7 +62,7 @@ entries 25 to 30). It is off by default:
 
 - `enabled`: switches all quotas on or off.
 - `topics`: featured topics set by editors, topic name to share, for example
-  `{ "climate": 0.1 }`, whatever the user's interests.
+  `{ "climate": 0.1 }`, whatever the user's interests. A share is filled only from the candidates the pools found, so a topic with no recent, popular or matching articles comes up short and its slots go to the normal fill.
 - `follows.publishers`, `follows.communities`: shares for followed publishers
   and communities.
 - `surprise`: the share for articles matching none of the user's topics or
